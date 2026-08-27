@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# banco local do catálogo (recriado a partir do catálogo embutido)
+movia.db
+movia.db-shm
+movia.db-wal
+
+# runtime de visão computacional copiado por scripts/prepare-mediapipe.mjs
+/public/mediapipe
+
+# testes de navegador
+/test-results
+/playwright-report
+/.screenshots

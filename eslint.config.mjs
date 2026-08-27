@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Ativos de terceiros copiados para servir o runtime de visão computacional.
+    "public/mediapipe/**",
   ]),
 ]);
 

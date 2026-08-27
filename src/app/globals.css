@@ -1,26 +1,174 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-ink: #17231d;
+  --color-muted: #68756e;
+  --color-canvas: #f4f6f1;
+  --color-surface: #ffffff;
+  --color-line: #dce3dc;
+  --color-vivid: #38d178;
+  --color-deep: #08713a;
+  --color-lime: #e4ff6d;
+  --color-night: #10231a;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-card: 20px;
+  --radius-soft: 14px;
+
+  --shadow-soft: 0 1px 2px rgba(23, 35, 29, 0.04),
+    0 12px 32px -18px rgba(23, 35, 29, 0.24);
+  --shadow-lift: 0 2px 4px rgba(23, 35, 29, 0.05),
+    0 22px 48px -22px rgba(23, 35, 29, 0.32);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv01";
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: var(--color-lime);
+    color: var(--color-night);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-deep);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+    font-weight: 800;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .display-xl {
+    font-size: clamp(2.6rem, 6.4vw, 5.1rem);
+    font-weight: 850;
+    letter-spacing: -0.045em;
+    line-height: 0.93;
+  }
+
+  .display-lg {
+    font-size: clamp(2.1rem, 4.6vw, 3.5rem);
+    font-weight: 830;
+    letter-spacing: -0.04em;
+    line-height: 0.96;
+  }
+
+  .display-md {
+    font-size: clamp(1.6rem, 3vw, 2.3rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+
+  .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .card-base {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .movia-lines {
+    background-image: repeating-linear-gradient(
+      100deg,
+      rgba(56, 209, 120, 0.16) 0px,
+      rgba(56, 209, 120, 0.16) 1px,
+      transparent 1px,
+      transparent 13px
+    );
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@keyframes movia-stride {
+  0% {
+    transform: translateX(-14%);
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+@keyframes movia-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.16);
+    opacity: 1;
+  }
+}
+
+@keyframes movia-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes movia-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(320%);
+  }
 }

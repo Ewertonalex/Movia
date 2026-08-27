@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MOVIA — Seu movimento. Mais consciente.
 
-## Getting Started
+Coach visual de treino que roda no navegador. Você envia um vídeo curto, o app
+mapeia a pose frame a frame **no próprio dispositivo**, identifica cada repetição
+ou passada, aponta o que merece atenção com incerteza declarada e mostra uma
+execução de referência em vídeo real.
 
-First, run the development server:
+O mesmo produto reúne quatro superfícies:
+
+| Superfície         | O que faz                                                                 |
+| ------------------ | ------------------------------------------------------------------------- |
+| **Exercícios**     | Biblioteca com 23 exercícios reais em 9 grupos musculares, busca e filtros |
+| **Rotina**         | Planejador semanal determinístico, salvo apenas no navegador               |
+| **Analisar vídeo** | Upload local, detecção de repetições/passadas e feedback com cues          |
+| **Sobre**          | Propósito, método de análise, referências abertas, privacidade e limites   |
+
+## Como rodar localmente
+
+Requisitos: Node.js 20+ (testado no 24) e npm.
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+O `predev` copia o runtime WebAssembly do MediaPipe para `public/mediapipe/wasm`
+e baixa o modelo `pose_landmarker_lite` para `public/mediapipe/models`. Se o
+download falhar (máquina offline no primeiro setup), o app usa a URL pública do
+MediaPipe como fallback — nada além do modelo trafega pela rede.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Verificação
 
-## Learn More
+```bash
+npm run typecheck   # TypeScript
+npm run lint        # ESLint (zero warnings)
+npm run test        # Vitest: SSR, catálogo, vídeos, planejador, detecção
+npm run test:e2e    # Playwright: fluxo real em desktop e mobile
+npm run build       # build de produção
+npm run check       # typecheck + lint + test + build
+```
 
-To learn more about Next.js, take a look at the following resources:
+A suíte de navegador cobre navegação entre as superfícies, conteúdo e atalhos da
+superfície Sobre, busca e modal da
+biblioteca, geração/persistência/reorganização da rotina, recusa de arquivo
+inválido, análise de demonstração com vídeo de referência, ausência de rolagem
+horizontal, carga real do `PoseLandmarker` (GPU com fallback para CPU) e o
+pipeline completo de upload com um WebM gravado no próprio navegador.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Publicação
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+O projeto é um app Next.js padrão e sobe em qualquer plataforma serverless
+compatível.
 
-## Deploy on Vercel
+```bash
+npm run build
+npm run start        # execução local do bundle de produção
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Na Vercel basta importar o repositório: o `prebuild` prepara os assets do
+MediaPipe automaticamente. Dois pontos de atenção:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `better-sqlite3` é um módulo nativo e está declarado em
+  `serverExternalPackages`. Em runtimes sem sistema de arquivos gravável, a
+  camada de dados cai no catálogo embutido sem quebrar nada.
+- Os arquivos de `public/mediapipe` são gerados no build e ficam fora do Git.
+
+## Arquitetura
+
+```
+src/
+  app/                 layout, estilos globais e página (server component)
+  components/
+    analyze/           coach de vídeo: hero, upload, progresso, resultados
+    library/           biblioteca de exercícios e modal de detalhes
+    planner/           planejador semanal
+    ui/                primitivas visuais e toast
+  lib/
+    analysis/          geometria, métricas, detecção de ciclos, regras, pose
+    planner/           geração do plano e persistência local
+    db/                Drizzle + SQLite com reconciliação do catálogo
+    catalog.ts         os 23 exercícios como fonte embutida
+tests/                 Vitest
+e2e/                   Playwright
+```
+
+### Dados e fallback
+
+O catálogo vive em `src/lib/catalog.ts`. Quando o SQLite está disponível, o app
+faz seed do banco na primeira execução e passa a ler de lá. Vídeo, perfil de
+análise, ângulo de câmera e ordem sempre vêm do catálogo embutido, mesmo quando
+o banco tem linhas antigas — assim uma correção em código nunca é anulada por
+dado desatualizado.
+
+### Análise de movimento
+
+- `@mediapipe/tasks-vision` com `PoseLandmarker` em `runningMode: VIDEO`,
+  amostragem a 10 fps, GPU com fallback para CPU.
+- Frames abaixo de 0,32 de visibilidade média são descartados; a análise exige
+  ao menos `max(12, 35%)` dos frames amostrados.
+- Séries suavizadas com média móvel de raio 2.
+- Agachamento, flexão e rosca usam máquina de estados com histerese.
+- Afundo caminhando é tratado como movimento contínuo: as passadas saem de vales
+  proeminentes na flexão do joelho, sem exigir retorno à posição neutra.
+- Score por ciclo: `clamp(round(96 − 11 × alertas), 58, 98)`; a consistência é a
+  média dos scores.
+
+### Privacidade
+
+Vídeo, pontos de pose, altura, peso e rotina não saem do navegador. Não há
+reconhecimento facial, o vídeo não é persistido e o plano semanal fica em
+`localStorage` sob a chave `movia-weekly-plan-v1` (a chave legada
+`form-weekly-plan-v1` ainda é lida, para não perder planos de versões
+anteriores).
+
+## Limitações reais
+
+- A análise por vídeo cobre quatro movimentos: agachamento, flexão de braço,
+  rosca direta e afundo livre/caminhando.
+- Estimativas visuais têm margem de erro. Roupas largas, pouca luz, câmera
+  instável ou enquadramento parcial degradam a leitura, e o app avisa quando não
+  enxerga o corpo o suficiente.
+- Não há conta de usuário nem histórico em nuvem: “Minhas análises” apenas
+  informa isso.
+- Os vídeos de referência abrem no YouTube em nova aba. Nenhum player é
+  incorporado, porque embeds costumam ser bloqueados.
+- O resultado é visual, não diagnóstico. Dor, lesão, gestação ou condição
+  clínica pedem orientação de um profissional qualificado.
