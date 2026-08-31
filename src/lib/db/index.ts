@@ -75,10 +75,9 @@ let cached: CatalogPayload | null = null;
 export async function loadCatalog(): Promise<CatalogPayload> {
   if (cached) return cached;
 
-  const skipSqlite =
-    process.env.NETLIFY === "true" || process.env.MOVIA_SKIP_SQLITE === "1";
+  const useSqlite = process.env.MOVIA_USE_SQLITE === "1";
 
-  if (skipSqlite) {
+  if (!useSqlite) {
     cached = { exercises: EXERCISE_CATALOG, source: "catalog" };
     return cached;
   }

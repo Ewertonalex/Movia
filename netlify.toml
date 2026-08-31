@@ -4,7 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  MOVIA_SKIP_SQLITE = "1"
 
+# A Netlify injeta a versão atual do adaptador OpenNext.
+# Não pinamos @netlify/plugin-nextjs no package.json.
 [[plugins]]
   package = "@netlify/plugin-nextjs"

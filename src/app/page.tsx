@@ -1,9 +1,6 @@
 import { AppShell } from "@/components/app-shell";
-import { loadCatalog } from "@/lib/db";
+import { EXERCISE_CATALOG } from "@/lib/catalog";
 
-export const dynamic = "force-dynamic";
-
-export default async function HomePage() {
-  const { exercises, source } = await loadCatalog();
-  return <AppShell catalog={exercises} source={source} />;
+export default function HomePage() {
+  return <AppShell catalog={EXERCISE_CATALOG} source="catalog" />;
 }

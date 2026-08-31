@@ -65,8 +65,8 @@ as análises ficam no IndexedDB do navegador de cada pessoa.
 
 Dois pontos de atenção:
 
-- `better-sqlite3` só entra em ambiente local com disco gravável. Na Netlify o
-  app cai no catálogo embutido.
+- `better-sqlite3` só entra se `MOVIA_USE_SQLITE=1` (uso local). Na Netlify o
+  app usa o catálogo embutido — o disco do servidor some entre deploys.
 - Os arquivos de `public/mediapipe` são gerados no build e ficam fora do Git.
 
 ## Arquitetura
