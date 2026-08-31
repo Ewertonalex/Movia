@@ -1,15 +1,22 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AboutSurface } from "@/components/about/about-surface";
 import { AnalyzeSurface } from "@/components/analyze/analyze-surface";
 import { MoviaMark } from "@/components/brand/movia-mark";
+import { HistorySurface } from "@/components/history/history-surface";
 import { LibrarySurface } from "@/components/library/library-surface";
 import { PlannerSurface } from "@/components/planner/planner-surface";
 import { SiteHeader } from "@/components/site-header";
 import { ToastProvider, useToast } from "@/components/ui/toast";
+import { hydrateHistory } from "@/lib/analysis/history";
 import type { CatalogSource } from "@/lib/db/reconcile";
-import type { AnalysisProfile, Exercise, Surface } from "@/lib/types";
+import type {
+  AnalysisProfile,
+  Exercise,
+  SavedAnalysis,
+  Surface,
+} from "@/lib/types";
 
 interface AppShellProps {
   catalog: Exercise[];
@@ -30,7 +37,12 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
   const [analyzeSession, setAnalyzeSession] = useState<{
     key: number;
     profile: AnalysisProfile;
-  }>({ key: 0, profile: "squat" });
+    saved: SavedAnalysis | null;
+  }>({ key: 0, profile: "squat", saved: null });
+
+  useEffect(() => {
+    void hydrateHistory();
+  }, []);
 
   const navigate = useCallback((next: Surface) => {
     setSurface(next);
@@ -39,16 +51,17 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
 
   const handleBrandClick = useCallback(() => {
     setSurface("analyze");
-    setAnalyzeSession((session) => ({ key: session.key + 1, profile: "squat" }));
+    setAnalyzeSession((session) => ({
+      key: session.key + 1,
+      profile: "squat",
+      saved: null,
+    }));
     window.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
   const handleHistoryClick = useCallback(() => {
-    showToast(
-      "Histórico chega com as contas",
-      "Suas análises acontecem no dispositivo e não são salvas em nuvem por enquanto.",
-    );
-  }, [showToast]);
+    navigate("history");
+  }, [navigate]);
 
   const handleAnalyzeExercise = useCallback(
     (exercise: Exercise) => {
@@ -60,12 +73,26 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
         return;
       }
       const profile = exercise.analysisProfile;
-      setAnalyzeSession((session) => ({ key: session.key + 1, profile }));
+      setAnalyzeSession((session) => ({
+        key: session.key + 1,
+        profile,
+        saved: null,
+      }));
       setSurface("analyze");
       window.scrollTo({ top: 0, behavior: "auto" });
     },
     [showToast],
   );
+
+  const handleOpenSaved = useCallback((saved: SavedAnalysis) => {
+    setAnalyzeSession((session) => ({
+      key: session.key + 1,
+      profile: saved.profile,
+      saved,
+    }));
+    setSurface("analyze");
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
 
   return (
     <div className="flex min-h-full flex-col">
@@ -82,6 +109,7 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
             key={analyzeSession.key}
             catalog={catalog}
             initialProfile={analyzeSession.profile}
+            initialSaved={analyzeSession.saved}
           />
         ) : null}
 
@@ -93,6 +121,13 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
           <PlannerSurface
             catalog={catalog}
             onOpenLibrary={() => navigate("exercises")}
+          />
+        ) : null}
+
+        {surface === "history" ? (
+          <HistorySurface
+            onOpen={handleOpenSaved}
+            onAnalyze={() => navigate("analyze")}
           />
         ) : null}
 
@@ -129,6 +164,7 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
               <li>Exercícios · biblioteca com vídeos reais</li>
               <li>Rotina · planejamento semanal local</li>
               <li>Analisar vídeo · repetições e passadas</li>
+              <li>Minhas análises · histórico local no navegador</li>
               <li>Sobre · propósito, método e limites</li>
             </ul>
           </div>
@@ -138,6 +174,7 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
             <ul className="space-y-1.5 text-sm text-muted">
               <li>Processado no dispositivo</li>
               <li>Sem reconhecimento facial</li>
+              <li>Resultados salvos no navegador</li>
               <li>Vídeos não são armazenados</li>
               <li>
                 Catálogo:{" "}

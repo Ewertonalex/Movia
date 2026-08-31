@@ -30,7 +30,16 @@ import {
   validateVideoFile,
 } from "@/lib/analysis/upload";
 import { getExerciseById } from "@/lib/catalog";
-import type { AnalysisProfile, AnalysisResult, Exercise } from "@/lib/types";
+import {
+  saveAnalysis,
+  toAnalysisResult,
+} from "@/lib/analysis/history";
+import type {
+  AnalysisProfile,
+  AnalysisResult,
+  Exercise,
+  SavedAnalysis,
+} from "@/lib/types";
 import { cn, formatBytes, formatSeconds } from "@/lib/utils";
 
 type Stage = "choose" | "ready" | "analyzing" | "results";
@@ -45,17 +54,21 @@ const PROGRESS_ORDER: ProgressStage[] = [
 interface AnalyzeSurfaceProps {
   catalog: Exercise[];
   initialProfile: AnalysisProfile;
+  initialSaved?: SavedAnalysis | null;
 }
 
 export function AnalyzeSurface({
   catalog,
   initialProfile,
+  initialSaved,
 }: AnalyzeSurfaceProps) {
-  const [profileId, setProfileId] = useState<AnalysisProfile>(initialProfile);
-  const [cameraView, setCameraView] = useState<CameraAngle>(
-    getProfile(initialProfile).defaultCamera,
+  const [profileId, setProfileId] = useState<AnalysisProfile>(
+    initialSaved?.profile ?? initialProfile,
   );
-  const [stage, setStage] = useState<Stage>("choose");
+  const [cameraView, setCameraView] = useState<CameraAngle>(
+    initialSaved?.cameraView ?? getProfile(initialProfile).defaultCamera,
+  );
+  const [stage, setStage] = useState<Stage>(initialSaved ? "results" : "choose");
   const [file, setFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
@@ -64,7 +77,10 @@ export function AnalyzeSurface({
     stage: ProgressStage;
     ratio: number;
   }>({ stage: "model", ratio: 0 });
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(
+    initialSaved ? toAnalysisResult(initialSaved) : null,
+  );
+  const [fromHistory] = useState(Boolean(initialSaved));
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -143,7 +159,9 @@ export function AnalyzeSurface({
     releaseVideo();
     setFile(null);
     setVideoUrl(null);
-    setAnalysis(buildDemoAnalysis());
+    const demo = buildDemoAnalysis();
+    setAnalysis(demo);
+    void saveAnalysis(demo);
     setStage("results");
   };
 
@@ -189,6 +207,7 @@ export function AnalyzeSurface({
       }
 
       setAnalysis(result);
+      void saveAnalysis(result);
       setProgress({ stage: "recommendations", ratio: 1 });
       setStage("results");
     } catch (caught) {
@@ -208,6 +227,7 @@ export function AnalyzeSurface({
           analysis={analysis}
           profile={getProfile(analysis.profile)}
           videoUrl={videoUrl}
+          fromHistory={fromHistory}
           referenceExercise={getExerciseById(
             getProfile(analysis.profile).referenceExerciseId,
             catalog,

@@ -2,14 +2,17 @@ import { EXERCISE_CATALOG } from "@/lib/catalog";
 import type {
   Exercise,
   MuscleGroup,
+  PlanAdjustment,
   PlannedDay,
   PlannedExercise,
   PlannerGoal,
   PlannerInput,
   PlannerLevel,
+  PlannerSex,
   WeekdayKey,
   WeeklyPlan,
 } from "@/lib/types";
+import { formatRest } from "@/lib/utils";
 
 export const WEEKDAYS: { key: WeekdayKey; label: string; full: string }[] = [
   { key: "seg", label: "SEG", full: "Segunda-feira" },
@@ -34,6 +37,12 @@ export const LEVELS: PlannerLevel[] = [
   "Avançado",
 ];
 
+export const SEXES: PlannerSex[] = [
+  "Masculino",
+  "Feminino",
+  "Prefiro não informar",
+];
+
 export const SESSION_MINUTES = [30, 45, 60, 75];
 
 export const MUSCLE_BUNDLES: MuscleGroup[][] = [
@@ -43,15 +52,42 @@ export const MUSCLE_BUNDLES: MuscleGroup[][] = [
   ["Core"],
 ];
 
-export const GOAL_PRESCRIPTION: Record<
-  PlannerGoal,
-  { reps: string; restSeconds: number }
-> = {
+export interface Prescription {
+  reps: string;
+  restSeconds: number;
+}
+
+/** Referência padrão do produto, também usada por quem prefere não informar o sexo. */
+export const GOAL_PRESCRIPTION: Record<PlannerGoal, Prescription> = {
   Hipertrofia: { reps: "8–12", restSeconds: 75 },
   Força: { reps: "5–8", restSeconds: 120 },
   Condicionamento: { reps: "12–15", restSeconds: 45 },
   "Saúde e constância": { reps: "10–12", restSeconds: 60 },
 };
+
+/**
+ * Calibração feminina. Mulheres apresentam, em média, maior resistência à fadiga
+ * e recuperação mais rápida entre séries em cargas submáximas, o que sustenta
+ * descansos mais curtos e faixas de repetição um pouco mais altas. O trabalho de
+ * força permanece igual, porque os ganhos relativos de força e hipertrofia são
+ * equivalentes entre os sexos.
+ */
+export const FEMALE_GOAL_PRESCRIPTION: Record<PlannerGoal, Prescription> = {
+  Hipertrofia: { reps: "10–14", restSeconds: 60 },
+  Força: { reps: "5–8", restSeconds: 105 },
+  Condicionamento: { reps: "14–18", restSeconds: 35 },
+  "Saúde e constância": { reps: "12–15", restSeconds: 45 },
+};
+
+const UPPER_BODY: MuscleGroup[] = [
+  "Peito",
+  "Costas",
+  "Ombros",
+  "Bíceps",
+  "Tríceps",
+];
+
+const MAX_SETS = 5;
 
 export const LEVEL_SETS: Record<PlannerLevel, number> = {
   Iniciante: 2,
@@ -69,6 +105,7 @@ export const LIMITS = {
 export const PLANNER_DEFAULTS: PlannerInput = {
   heightCm: 175,
   weightKg: 75,
+  sex: "Prefiro não informar",
   goal: "Hipertrofia",
   level: "Iniciante",
   minutes: 45,
@@ -88,6 +125,61 @@ const SESSION_NAMES = "ABCDEFG".split("");
 const MUSCLE_ORDER: Record<MuscleGroup, number> = Object.fromEntries(
   MUSCLE_BUNDLES.flat().map((muscle, index) => [muscle, index]),
 ) as Record<MuscleGroup, number>;
+
+/** Sem informação de sexo, o plano segue a referência padrão. */
+export function usesFemaleCalibration(sex: PlannerSex): boolean {
+  return sex === "Feminino";
+}
+
+export function prescriptionFor(
+  goal: PlannerGoal,
+  sex: PlannerSex,
+): Prescription {
+  return usesFemaleCalibration(sex)
+    ? FEMALE_GOAL_PRESCRIPTION[goal]
+    : GOAL_PRESCRIPTION[goal];
+}
+
+/** Explica em linguagem direta o que o sexo informado mudou no plano. */
+export function planAdjustments(input: PlannerInput): PlanAdjustment[] {
+  if (!usesFemaleCalibration(input.sex)) {
+    const detail =
+      input.sex === "Prefiro não informar"
+        ? "Sem o sexo informado, a rotina segue a referência padrão do MOVIA, com as faixas de repetição e descanso usadas na maior parte dos programas."
+        : "A rotina segue a referência padrão do MOVIA, com as faixas de repetição e descanso usadas na maior parte dos programas.";
+    return [{ title: "Prescrição de referência", detail }];
+  }
+
+  const standard = GOAL_PRESCRIPTION[input.goal];
+  const female = FEMALE_GOAL_PRESCRIPTION[input.goal];
+  const adjustments: PlanAdjustment[] = [];
+
+  if (female.restSeconds !== standard.restSeconds) {
+    adjustments.push({
+      title: `Descanso de ${formatRest(female.restSeconds)} em vez de ${formatRest(standard.restSeconds)}`,
+      detail:
+        "Em média, mulheres restauram força mais rápido entre séries, então o intervalo menor mantém o desempenho e aumenta a densidade do treino.",
+    });
+  }
+
+  if (female.reps !== standard.reps) {
+    adjustments.push({
+      title: `Faixa de ${female.reps} repetições em vez de ${standard.reps}`,
+      detail:
+        "A maior resistência à fadiga em cargas submáximas permite sustentar mais repetições por série sem perder qualidade de execução.",
+    });
+  }
+
+  if (input.muscles.some((muscle) => UPPER_BODY.includes(muscle))) {
+    adjustments.push({
+      title: "Uma série a mais nos exercícios de membros superiores",
+      detail:
+        "É onde a força inicial média é menor e os ganhos relativos costumam ser maiores, então o volume extra tem mais efeito.",
+    });
+  }
+
+  return adjustments;
+}
 
 export function exercisesPerSession(minutes: number): number {
   if (minutes <= 35) return 3;
@@ -153,8 +245,9 @@ export function generateWeeklyPlan(
   const days = orderedDays(input.days);
   const bundles = activeBundles(input.muscles);
   const perSession = exercisesPerSession(input.minutes);
-  const prescription = GOAL_PRESCRIPTION[input.goal];
+  const prescription = prescriptionFor(input.goal, input.sex);
   const baseSets = LEVEL_SETS[input.level];
+  const femaleCalibration = usesFemaleCalibration(input.sex);
 
   const selectedMuscles = bundles.flat();
   const pool = new Map<MuscleGroup, Exercise[]>();
@@ -248,10 +341,14 @@ export function generateWeeklyPlan(
         (muscleUsage.get(picked.muscleGroup) ?? 0) + 1,
       );
 
-      const sets =
+      let sets =
         input.goal === "Força" && slot === 0
           ? Math.max(baseSets, 3)
           : baseSets;
+
+      if (femaleCalibration && UPPER_BODY.includes(picked.muscleGroup)) {
+        sets = Math.min(sets + 1, MAX_SETS);
+      }
 
       exercises.push({
         exerciseId: picked.id,
@@ -284,6 +381,7 @@ export function generateWeeklyPlan(
     createdAt: new Date().toISOString(),
     input: { ...input, days, muscles: [...input.muscles] },
     rotation,
+    adjustments: planAdjustments(input),
     days: plannedDays,
   };
 }

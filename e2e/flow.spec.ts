@@ -206,6 +206,26 @@ test.describe("fluxo principal do MOVIA", () => {
     await expect(page.getByText("12 exercícios na semana")).toBeVisible();
   });
 
+  test("calibra a rotina pelo sexo informado", async ({ page }) => {
+    await page
+      .getByRole("navigation", { name: "Navegação principal" })
+      .getByRole("button", { name: "Rotina" })
+      .click();
+
+    const main = page.getByRole("main");
+    await page.getByRole("button", { name: "Gerar minha rotina inteligente" }).click();
+    await expect(main.getByText("Como este plano foi calibrado")).toBeVisible();
+    await expect(main.getByText(/Sem o sexo informado/)).toBeVisible();
+    await expect(main.getByText("8–12 reps", { exact: false }).first()).toBeVisible();
+
+    await page.getByRole("button", { name: "Feminino", exact: true }).click();
+    await page.getByRole("button", { name: "Refazer minha rotina" }).click();
+
+    await expect(main.getByText(/Descanso de 1 min em vez de/)).toBeVisible();
+    await expect(main.getByText(/Faixa de 10–14 repetições/)).toBeVisible();
+    await expect(main.getByText("10–14 reps", { exact: false }).first()).toBeVisible();
+  });
+
   test("valida o formulário da rotina", async ({ page }) => {
     await page
       .getByRole("navigation", { name: "Navegação principal" })
@@ -238,12 +258,26 @@ test.describe("fluxo principal do MOVIA", () => {
     await expect(page.getByText("Arraste o vídeo aqui")).toBeVisible();
   });
 
-  test("mostra aviso ao pedir o histórico", async ({ page }) => {
-    const button = page.getByRole("button", { name: "Minhas análises" });
-    if (await button.isVisible()) {
-      await button.click();
-      await expect(page.getByText("Histórico chega com as contas")).toBeVisible();
-    }
+  test("salva a análise de demonstração e reabre pelo histórico", async ({
+    page,
+  }) => {
+    await page
+      .getByRole("button", { name: "Ver uma análise de demonstração" })
+      .first()
+      .click();
+    await expect(page.getByText("Análise concluída")).toBeVisible();
+
+    await page.getByRole("button", { name: "Minhas análises" }).click();
+    await expect(
+      page.getByRole("heading", { level: 1, name: /Minhas análises/ }),
+    ).toBeVisible();
+    await expect(page.getByText("1 análise salva")).toBeVisible();
+    await expect(page.getByText("Agachamento").first()).toBeVisible();
+
+    await page.getByRole("button", { name: "Ver resultado" }).click();
+    await expect(page.getByText("Análise concluída")).toBeVisible();
+    await expect(page.getByText("Salva neste aparelho")).toBeVisible();
+    await expect(page.getByText("Demonstração").first()).toBeVisible();
   });
 
   test("não gera rolagem horizontal", async ({ page }) => {

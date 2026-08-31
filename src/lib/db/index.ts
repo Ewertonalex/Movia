@@ -75,6 +75,14 @@ let cached: CatalogPayload | null = null;
 export async function loadCatalog(): Promise<CatalogPayload> {
   if (cached) return cached;
 
+  const skipSqlite =
+    process.env.NETLIFY === "true" || process.env.MOVIA_SKIP_SQLITE === "1";
+
+  if (skipSqlite) {
+    cached = { exercises: EXERCISE_CATALOG, source: "catalog" };
+    return cached;
+  }
+
   try {
     const [{ default: Database }, { drizzle }, schema] = await Promise.all([
       import("better-sqlite3"),

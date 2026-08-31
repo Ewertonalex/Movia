@@ -8,6 +8,7 @@ import {
   RotateCcw,
   ScanLine,
   Shuffle,
+  SlidersHorizontal,
   Sparkles,
   Timer,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import {
   LEVELS,
   PLANNER_DEFAULTS,
   SESSION_MINUTES,
+  SEXES,
   WEEKDAYS,
   generateWeeklyPlan,
   validatePlannerInput,
@@ -35,6 +37,7 @@ import type {
   PlannerGoal,
   PlannerInput,
   PlannerLevel,
+  PlannerSex,
   WeekdayKey,
 } from "@/lib/types";
 import { cn, formatRest } from "@/lib/utils";
@@ -98,6 +101,8 @@ export function PlannerSurface({
       plan?.days.reduce((total, day) => total + day.exercises.length, 0) ?? 0,
     [plan],
   );
+
+  const adjustments = plan?.adjustments ?? [];
 
   return (
     <div className="mx-auto w-full max-w-[1240px] px-4 pb-16 sm:px-6 lg:px-10">
@@ -173,6 +178,29 @@ export function PlannerSurface({
               />
             </label>
           </div>
+
+          <fieldset className="space-y-3">
+            <legend className="eyebrow">Sexo</legend>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {SEXES.map((sex) => (
+                <OptionButton
+                  key={sex}
+                  label={sex}
+                  active={input.sex === sex}
+                  onClick={() =>
+                    setInput((current) => ({
+                      ...current,
+                      sex: sex as PlannerSex,
+                    }))
+                  }
+                />
+              ))}
+            </div>
+            <p className="text-xs leading-relaxed text-muted">
+              Usamos só para calibrar descanso, repetições e volume. Sem essa
+              informação, a rotina segue a referência padrão.
+            </p>
+          </fieldset>
 
           <fieldset className="space-y-3">
             <legend className="eyebrow">Objetivo</legend>
@@ -358,6 +386,37 @@ export function PlannerSurface({
               </Badge>
             </div>
           </div>
+
+          {adjustments.length > 0 ? (
+            <div className="card-base space-y-4 p-5 sm:p-6">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="size-4 text-deep" aria-hidden />
+                <p className="text-sm font-[820] tracking-tight">
+                  Como este plano foi calibrado
+                </p>
+              </div>
+              <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {adjustments.map((adjustment) => (
+                  <li
+                    key={adjustment.title}
+                    className="rounded-2xl border border-line bg-canvas/60 p-4"
+                  >
+                    <p className="text-sm font-[800] tracking-tight">
+                      {adjustment.title}
+                    </p>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted">
+                      {adjustment.detail}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <p className="rounded-2xl bg-canvas px-4 py-3 text-xs leading-relaxed text-muted">
+                São diferenças médias entre grupos. A variação entre pessoas do
+                mesmo sexo é maior do que a diferença entre as médias, então use
+                isto como ponto de partida e ajuste pelo que você sente na série.
+              </p>
+            </div>
+          ) : null}
 
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {plan.days.map((day) => {

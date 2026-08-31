@@ -10,7 +10,7 @@ O mesmo produto reúne quatro superfícies:
 | Superfície         | O que faz                                                                 |
 | ------------------ | ------------------------------------------------------------------------- |
 | **Exercícios**     | Biblioteca com 23 exercícios reais em 9 grupos musculares, busca e filtros |
-| **Rotina**         | Planejador semanal determinístico, salvo apenas no navegador               |
+| **Rotina**         | Planejador semanal determinístico com calibração por sexo, salvo no navegador |
 | **Analisar vídeo** | Upload local, detecção de repetições/passadas e feedback com cues          |
 | **Sobre**          | Propósito, método de análise, referências abertas, privacidade e limites   |
 
@@ -58,12 +58,15 @@ npm run build
 npm run start        # execução local do bundle de produção
 ```
 
-Na Vercel basta importar o repositório: o `prebuild` prepara os assets do
-MediaPipe automaticamente. Dois pontos de atenção:
+Na [Netlify](https://app.netlify.com/) importe o repositório GitHub
+`Ewertonalex/Movia`. O `netlify.toml` já define o build Next.js e pula o SQLite
+nativo — o disco da Netlify é efêmero, então o catálogo usa a cópia embutida e
+as análises ficam no IndexedDB do navegador de cada pessoa.
 
-- `better-sqlite3` é um módulo nativo e está declarado em
-  `serverExternalPackages`. Em runtimes sem sistema de arquivos gravável, a
-  camada de dados cai no catálogo embutido sem quebrar nada.
+Dois pontos de atenção:
+
+- `better-sqlite3` só entra em ambiente local com disco gravável. Na Netlify o
+  app cai no catálogo embutido.
 - Os arquivos de `public/mediapipe` são gerados no build e ficam fora do Git.
 
 ## Arquitetura
@@ -79,6 +82,7 @@ src/
   lib/
     analysis/          geometria, métricas, detecção de ciclos, regras, pose
     planner/           geração do plano e persistência local
+    analysis/          geometria, métricas, ciclos, regras, pose e histórico
     db/                Drizzle + SQLite com reconciliação do catálogo
     catalog.ts         os 23 exercícios como fonte embutida
 tests/                 Vitest
@@ -108,11 +112,12 @@ dado desatualizado.
 
 ### Privacidade
 
-Vídeo, pontos de pose, altura, peso e rotina não saem do navegador. Não há
-reconhecimento facial, o vídeo não é persistido e o plano semanal fica em
-`localStorage` sob a chave `movia-weekly-plan-v1` (a chave legada
-`form-weekly-plan-v1` ainda é lida, para não perder planos de versões
-anteriores).
+Vídeo e pontos de pose não saem do navegador. Não há reconhecimento facial e o
+arquivo de vídeo não é persistido. O plano semanal fica em `localStorage`
+(`movia-weekly-plan-v1`) e cada análise concluída vai para o IndexedDB
+(`movia-history`), com cópia no `localStorage` (`movia-analyses-v1`) se o banco
+do navegador estiver indisponível. A chave legada `form-weekly-plan-v1` ainda é
+lida, para não perder planos de versões anteriores.
 
 ## Limitações reais
 
@@ -121,8 +126,9 @@ anteriores).
 - Estimativas visuais têm margem de erro. Roupas largas, pouca luz, câmera
   instável ou enquadramento parcial degradam a leitura, e o app avisa quando não
   enxerga o corpo o suficiente.
-- Não há conta de usuário nem histórico em nuvem: “Minhas análises” apenas
-  informa isso.
+- Não há conta de usuário. Histórico de análises e rotina ficam no navegador
+  de quem usa o app; limpar os dados do site ou trocar de aparelho apaga o
+  que estava salvo.
 - Os vídeos de referência abrem no YouTube em nova aba. Nenhum player é
   incorporado, porque embeds costumam ser bloqueados.
 - O resultado é visual, não diagnóstico. Dor, lesão, gestação ou condição

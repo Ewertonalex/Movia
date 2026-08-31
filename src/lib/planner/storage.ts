@@ -1,3 +1,4 @@
+import { PLANNER_DEFAULTS, planAdjustments } from "@/lib/planner/plan";
 import type { WeeklyPlan } from "@/lib/types";
 
 export const PLAN_STORAGE_KEY = "movia-weekly-plan-v1";
@@ -15,6 +16,17 @@ function isWeeklyPlan(value: unknown): value is WeeklyPlan {
   );
 }
 
+/** Planos salvos antes da calibração por sexo seguem a referência padrão. */
+export function migrateStoredPlan(plan: WeeklyPlan): WeeklyPlan {
+  const input = { ...plan.input, sex: plan.input.sex ?? PLANNER_DEFAULTS.sex };
+  return {
+    ...plan,
+    input,
+    rotation: plan.rotation ?? 0,
+    adjustments: plan.adjustments ?? planAdjustments(input),
+  };
+}
+
 export function loadStoredPlan(): WeeklyPlan | null {
   if (typeof window === "undefined") return null;
   for (const key of [PLAN_STORAGE_KEY, LEGACY_PLAN_STORAGE_KEY]) {
@@ -23,7 +35,7 @@ export function loadStoredPlan(): WeeklyPlan | null {
       if (!raw) continue;
       const parsed: unknown = JSON.parse(raw);
       if (isWeeklyPlan(parsed)) {
-        return { ...parsed, rotation: parsed.rotation ?? 0 };
+        return migrateStoredPlan(parsed);
       }
     } catch {
       // chave corrompida: seguimos para a próxima

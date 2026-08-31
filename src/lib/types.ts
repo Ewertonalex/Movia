@@ -35,7 +35,7 @@ export interface Exercise {
   videoUrl: string;
 }
 
-export type Surface = "exercises" | "routine" | "analyze" | "about";
+export type Surface = "exercises" | "routine" | "analyze" | "about" | "history";
 
 export type Severity = "atencao" | "ajuste" | "ok";
 
@@ -84,6 +84,22 @@ export interface AnalysisResult {
   demo?: boolean;
 }
 
+/** Resultado persistido no banco do navegador — sem vídeo e sem landmarks. */
+export interface SavedAnalysis {
+  id: string;
+  createdAt: string;
+  exerciseName: string;
+  profile: AnalysisProfile;
+  cameraView: "lateral" | "frontal";
+  consistency: number;
+  sampledFrames: number;
+  validFrames: number;
+  durationSeconds: number;
+  demo?: boolean;
+  cycles: CycleResult[];
+  findings: Finding[];
+}
+
 export type PlannerGoal =
   | "Hipertrofia"
   | "Força"
@@ -92,11 +108,14 @@ export type PlannerGoal =
 
 export type PlannerLevel = "Iniciante" | "Intermediário" | "Avançado";
 
+export type PlannerSex = "Masculino" | "Feminino" | "Prefiro não informar";
+
 export type WeekdayKey = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
 
 export interface PlannerInput {
   heightCm: number;
   weightKg: number;
+  sex: PlannerSex;
   goal: PlannerGoal;
   level: PlannerLevel;
   minutes: number;
@@ -125,9 +144,15 @@ export interface PlannedDay {
   exercises: PlannedExercise[];
 }
 
+export interface PlanAdjustment {
+  title: string;
+  detail: string;
+}
+
 export interface WeeklyPlan {
   createdAt: string;
   input: PlannerInput;
   rotation: number;
+  adjustments: PlanAdjustment[];
   days: PlannedDay[];
 }

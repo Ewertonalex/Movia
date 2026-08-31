@@ -42,6 +42,7 @@ interface ResultsPanelProps {
   analysis: AnalysisResult;
   profile: ProfileConfig;
   videoUrl: string | null;
+  fromHistory?: boolean;
   referenceExercise: Exercise | undefined;
   onRestart: () => void;
 }
@@ -50,6 +51,7 @@ export function ResultsPanel({
   analysis,
   profile,
   videoUrl,
+  fromHistory = false,
   referenceExercise,
   onRestart,
 }: ResultsPanelProps) {
@@ -133,6 +135,9 @@ export function ResultsPanel({
               Câmera {analysis.cameraView === "frontal" ? "frontal" : "lateral"}
             </Badge>
             {analysis.demo ? <Badge tone="lime">Demonstração</Badge> : null}
+            {fromHistory ? (
+              <Badge tone="neutral">Salva neste aparelho</Badge>
+            ) : null}
           </div>
         </div>
 
@@ -174,7 +179,14 @@ export function ResultsPanel({
                 onPause={() => setPlaying(false)}
                 className="size-full object-contain"
               />
-            ) : null}
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#132B20] to-[#0B1A13] px-8 text-center">
+                <p className="max-w-sm text-sm leading-relaxed text-surface/80">
+                  O vídeo ficou no seu aparelho e não foi salvo. Os ciclos,
+                  scores e recomendações continuam aqui.
+                </p>
+              </div>
+            )}
 
             <PoseOverlay frames={analysis.frames} time={currentTime} />
 
@@ -183,18 +195,20 @@ export function ResultsPanel({
               {activeCycle} de {analysis.cycles.length}
             </div>
 
-            <button
-              type="button"
-              onClick={togglePlay}
-              aria-label={playing ? "Pausar vídeo" : "Reproduzir vídeo"}
-              className="absolute right-3 bottom-3 flex size-12 items-center justify-center rounded-full bg-surface/95 text-night shadow-lift transition hover:bg-surface"
-            >
-              {playing ? (
-                <Pause className="size-5 fill-current" aria-hidden />
-              ) : (
-                <Play className="size-5 translate-x-0.5 fill-current" aria-hidden />
-              )}
-            </button>
+            {videoUrl || analysis.demo ? (
+              <button
+                type="button"
+                onClick={togglePlay}
+                aria-label={playing ? "Pausar vídeo" : "Reproduzir vídeo"}
+                className="absolute right-3 bottom-3 flex size-12 items-center justify-center rounded-full bg-surface/95 text-night shadow-lift transition hover:bg-surface"
+              >
+                {playing ? (
+                  <Pause className="size-5 fill-current" aria-hidden />
+                ) : (
+                  <Play className="size-5 translate-x-0.5 fill-current" aria-hidden />
+                )}
+              </button>
+            ) : null}
           </div>
 
           <div className="space-y-3 p-5">

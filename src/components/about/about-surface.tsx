@@ -76,7 +76,7 @@ const PILLARS: {
     bullets: [
       "Distribuição por blocos musculares ao longo da semana",
       "Séries por experiência e prescrição por objetivo",
-      "Quantidade de exercícios conforme o tempo disponível",
+      "Descanso e repetições calibrados pelo sexo informado",
       "Fica salvo só no seu navegador, pronto na próxima visita",
     ],
     action: "Montar minha rotina",
@@ -128,7 +128,7 @@ const FAQ = [
   {
     question: "Meu vídeo vai para algum servidor?",
     answer:
-      "Não. O arquivo é lido pelo navegador com um endereço temporário local, processado ali mesmo e descartado quando você inicia uma nova análise. Altura, peso e rotina seguem a mesma regra.",
+      "Não. O arquivo é lido pelo navegador com um endereço temporário local, processado ali mesmo e descartado. Só o resultado (ciclos, scores e recomendações) fica no banco do seu navegador, para você reabrir depois.",
   },
   {
     question: "Por que só quatro exercícios têm análise por vídeo?",
@@ -151,9 +151,19 @@ const FAQ = [
       "Como movimento contínuo. Cada passada é reconhecida por um vale proeminente na flexão do joelho, então você não precisa voltar ao ponto de partida nem parar entre uma passada e outra.",
   },
   {
+    question: "Onde ficam minhas análises?",
+    answer:
+      "No IndexedDB do seu navegador, com cópia de segurança no armazenamento local. Elas sobrevivem a fechar a aba e voltar outro dia. Não vão para a Netlify nem para nenhum servidor. Limpar os dados do site ou trocar de aparelho apaga o histórico.",
+  },
+  {
     question: "O score serve para quê?",
     answer:
       "Para comparar suas próprias repetições dentro do mesmo vídeo e perceber onde a execução começou a mudar. Ele não é nota de aptidão nem comparação com outras pessoas.",
+  },
+  {
+    question: "Por que a rotina pergunta o sexo?",
+    answer:
+      "Porque mulheres apresentam, em média, maior resistência à fadiga e recuperação mais rápida entre séries, o que sustenta descansos mais curtos e faixas de repetição um pouco maiores. O plano mostra exatamente o que mudou por causa disso. Sem essa informação, usamos a referência padrão — e vale lembrar que a variação entre pessoas do mesmo sexo é maior do que a diferença entre as médias.",
   },
 ];
 
@@ -474,9 +484,9 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
                   "A câmera enxerga geometria, não a intensidade do que você está levantando.",
               },
               {
-                title: "Não guarda histórico",
+                title: "Histórico só neste navegador",
                 detail:
-                  "Ainda não existe conta de usuário. Cada análise vive na sessão atual do navegador.",
+                  "Resultados ficam no banco local do aparelho. Trocar de browser, limpar dados do site ou usar outro celular começa do zero.",
               },
             ].map((item) => (
               <li key={item.title} className="card-base p-5">
