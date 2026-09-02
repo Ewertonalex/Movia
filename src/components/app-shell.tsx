@@ -33,7 +33,7 @@ export function AppShell(props: AppShellProps) {
 
 function AppSurfaces({ catalog, source }: AppShellProps) {
   const { showToast } = useToast();
-  const [surface, setSurface] = useState<Surface>("analyze");
+  const [surface, setSurface] = useState<Surface>("routine");
   const [analyzeSession, setAnalyzeSession] = useState<{
     key: number;
     profile: AnalysisProfile;
@@ -50,7 +50,7 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
   }, []);
 
   const handleBrandClick = useCallback(() => {
-    setSurface("analyze");
+    setSurface("routine");
     setAnalyzeSession((session) => ({
       key: session.key + 1,
       profile: "squat",

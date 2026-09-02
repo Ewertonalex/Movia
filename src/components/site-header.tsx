@@ -32,7 +32,7 @@ export function SiteHeader({
           type="button"
           onClick={onBrandClick}
           className="group order-1 flex items-center gap-2.5 rounded-full py-1 pr-3 pl-1 transition hover:bg-ink/5"
-          aria-label="MOVIA — voltar ao início da análise"
+          aria-label="MOVIA — voltar à rotina"
         >
           <MoviaMark className="size-8 transition-transform duration-300 group-hover:scale-105" />
           <span className="text-[1.35rem] leading-none font-[850] tracking-[-0.05em] lowercase">

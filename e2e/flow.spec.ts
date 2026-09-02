@@ -1,23 +1,25 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function openAnalyze(page: Page) {
+  await page
+    .getByRole("navigation", { name: "Navegação principal" })
+    .getByRole("button", { name: "Analisar vídeo" })
+    .click();
+}
 
 test.describe("fluxo principal do MOVIA", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
   });
 
-  test("abre direto no coach de análise com o produto real", async ({
-    page,
-  }) => {
+  test("abre direto no planejador de rotina", async ({ page }) => {
     await expect(
-      page.getByRole("heading", { level: 1, name: /Seu movimento/ }),
+      page.getByRole("heading", { level: 1, name: /Sua rotina/ }),
     ).toBeVisible();
+    await expect(page.getByText("Monte sua semana")).toBeVisible();
     await expect(
-      page.getByRole("main").getByText("Processado no dispositivo").first(),
+      page.getByRole("button", { name: "Gerar minha rotina inteligente" }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("main").getByText("Sem reconhecimento facial"),
-    ).toBeVisible();
-    await expect(page.getByText("O que você vai treinar?")).toBeVisible();
     await expect(page.locator("iframe")).toHaveCount(0);
   });
 
@@ -137,6 +139,7 @@ test.describe("fluxo principal do MOVIA", () => {
   });
 
   test("recusa arquivo que não é vídeo", async ({ page }) => {
+    await openAnalyze(page);
     await page.getByLabel("Escolher vídeo do treino").setInputFiles({
       name: "planilha.csv",
       mimeType: "text/csv",
@@ -151,6 +154,7 @@ test.describe("fluxo principal do MOVIA", () => {
   test("gera a análise de demonstração com repetições e vídeo de referência", async ({
     page,
   }) => {
+    await openAnalyze(page);
     await page
       .getByRole("button", { name: "Ver uma análise de demonstração" })
       .first()
@@ -247,7 +251,8 @@ test.describe("fluxo principal do MOVIA", () => {
     );
   });
 
-  test("a marca reinicia o fluxo de análise", async ({ page }) => {
+  test("a marca volta para a rotina", async ({ page }) => {
+    await openAnalyze(page);
     await page
       .getByRole("button", { name: "Ver uma análise de demonstração" })
       .first()
@@ -255,12 +260,15 @@ test.describe("fluxo principal do MOVIA", () => {
     await expect(page.getByText("Análise concluída")).toBeVisible();
 
     await page.getByRole("button", { name: /MOVIA/ }).click();
-    await expect(page.getByText("Arraste o vídeo aqui")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: /Sua rotina/ }),
+    ).toBeVisible();
   });
 
   test("salva a análise de demonstração e reabre pelo histórico", async ({
     page,
   }) => {
+    await openAnalyze(page);
     await page
       .getByRole("button", { name: "Ver uma análise de demonstração" })
       .first()

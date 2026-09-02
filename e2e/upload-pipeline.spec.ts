@@ -64,6 +64,10 @@ test.describe("pipeline de upload com vídeo real", () => {
     page,
   }) => {
     await page.goto("/");
+    await page
+      .getByRole("navigation", { name: "Navegação principal" })
+      .getByRole("button", { name: "Analisar vídeo" })
+      .click();
     const buffer = await recordSyntheticVideo(page);
     expect(buffer.byteLength).toBeGreaterThan(1000);
 

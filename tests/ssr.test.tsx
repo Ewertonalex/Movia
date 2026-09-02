@@ -13,10 +13,10 @@ describe("renderização no servidor", () => {
   const html = renderApp();
 
   it("entrega o produto real já no primeiro carregamento", () => {
-    expect(html).toContain("Seu movimento.");
-    expect(html).toContain("Mais consciente.");
-    expect(html).toContain("Workout form coach");
-    expect(html).toContain("Envie um vídeo curto.");
+    expect(html).toContain("Sua rotina.");
+    expect(html).toContain("Do seu jeito.");
+    expect(html).toContain("Planejador semanal");
+    expect(html).toContain("Monte sua semana");
   });
 
   it("mostra a navegação com as três superfícies", () => {
@@ -32,13 +32,11 @@ describe("renderização no servidor", () => {
     expect(html).toContain("Sem reconhecimento facial");
   });
 
-  it("apresenta o passo de escolha do exercício com os quatro movimentos", () => {
-    expect(html).toContain("PASSO 01");
-    expect(html).toContain("O que você vai treinar?");
-    expect(html).toContain("Agachamento");
-    expect(html).toContain("Flexão");
-    expect(html).toContain("Rosca direta");
-    expect(html).toContain("Afundo livre / caminhando");
+  it("apresenta o formulário da rotina no primeiro carregamento", () => {
+    expect(html).toContain("Altura (cm)");
+    expect(html).toContain("Peso (kg)");
+    expect(html).toContain("Gerar minha rotina inteligente");
+    expect(html).toContain("Hipertrofia");
   });
 
   it("não depende de skeleton nem de conteúdo genérico", () => {
