@@ -2,7 +2,9 @@
 
 import {
   ArrowRight,
+  Bell,
   CalendarDays,
+  CheckCircle2,
   Cpu,
   EyeOff,
   Gauge,
@@ -63,10 +65,10 @@ const PILLARS: {
     summary:
       "Uma biblioteca para aprender o movimento antes de treinar, organizada por músculo.",
     bullets: [
-      "Vídeos reais de execução, sem animação genérica",
-      "Três passos objetivos e o erro mais comum de cada exercício",
-      "Busca por nome, músculo secundário ou equipamento",
-      "Atalho direto para analisar o seu vídeo do movimento",
+      "Dezenas de exercícios reais em nove grupos musculares, cada um com vídeo",
+      "Três passos objetivos e o erro mais comum de cada movimento",
+      "Busca por nome, músculo ou equipamento",
+      "Atalho direto para analisar o seu vídeo, quando o movimento já tem análise",
     ],
     action: "Abrir a biblioteca",
   },
@@ -75,14 +77,14 @@ const PILLARS: {
     icon: CalendarDays,
     title: "Rotina",
     summary:
-      "Um plano semanal montado no seu dispositivo, com regras claras de volume e descanso.",
+      "Um plano semanal montado no seu dispositivo, para usar no dia do treino — não só para gerar a semana.",
     bullets: [
-      "Rotina personalizada: o mesmo fluxo de sempre, sem pedir local nem equipamento",
-      "Atalho 'Treine com o que você tem' para montar em menos de um minuto",
-      "Nome de tratamento para o app falar com você neste navegador",
-      "Check-in aos 60 dias para renovar ou subir o nível",
-      "Opcional: mandar os treinos para o Google Agenda",
-      "Fica salvo só no seu navegador, pronto na próxima visita",
+      "Rotina personalizada ou o atalho “Treine com o que você tem”",
+      "Miniatura do vídeo em cada exercício, sem sair da rotina",
+      "Marcar “fiz esta série” ou “pulei”, com peso opcional quando há carga",
+      "Timer de descanso no próprio card",
+      "Horário que você escolhe: Google Agenda ou aviso neste aparelho",
+      "Check-in aos 60 dias, usando o que você marcou na semana",
     ],
     action: "Montar minha rotina",
   },
@@ -191,6 +193,26 @@ const FAQ = [
       "Na tela da Rotina, depois de gerar o plano, você escolhe o horário e toca em Continuar com o Google. O Movia cria um evento por dia de treino, repetindo por oito semanas. Sem isso, a Rotina oferece um aviso neste aparelho no mesmo horário — o aviso chega se o site estiver aberto.",
   },
   {
+    question: "Posso ver o vídeo do exercício sem sair da rotina?",
+    answer:
+      "Sim. Cada exercício da semana tem uma miniatura. Um toque abre a execução, os passos e o erro comum por cima do treino. O player do YouTube abre numa nova aba, porque o app não incorpora vídeo de fora.",
+  },
+  {
+    question: "O que é “Fiz esta série” e “Pulei”?",
+    answer:
+      "Na hora do treino, você marca o que aconteceu naquele exercício. A faixa da semana mostra o andamento. Se o movimento usa carga, dá para anotar o peso — é opcional. Tudo fica neste navegador e entra no convite dos 60 dias.",
+  },
+  {
+    question: "Para que serve o timer na rotina?",
+    answer:
+      "É o descanso entre séries, no próprio card. Ao marcar “Fiz esta série”, o cronômetro começa se ainda houver série pela frente.",
+  },
+  {
+    question: "O aviso deste aparelho funciona com o site fechado?",
+    answer:
+      "Não. Sem servidor, o lembrete só dispara se o MOVIA estiver aberto neste navegador. Quem manda a rotina para o Google Agenda recebe o aviso pela própria agenda, mesmo com o site fechado.",
+  },
+  {
     question: "O que acontece depois de dois meses de rotina?",
     answer:
       "O Movia pergunta se o treino está fácil, adequado ou pesado. Você pode renovar no mesmo nível, subir (iniciante, intermediário, avançado) ou dizer agora não — o convite volta em cerca de 60 dias. Se estiver pesado, o app não sugere subir. As séries que você marcou na semana entram nesse convite. Não é avaliação de saúde: é só um convite para ajustar o plano.",
@@ -228,9 +250,11 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
           <p className="max-w-xl text-base leading-relaxed text-muted">
             A entrada apresenta a marca e pergunta como você quer ser chamado.
             Depois, você escolhe a rotina de sempre ou o atalho “Treine com o
-            que você tem”. Em dois meses o plano volta a conversar. Se quiser,
-            o Google Agenda recebe os treinos. Sem julgamento, sem promessa de
-            correção perfeita e sem enviar o seu vídeo para lugar nenhum.
+            que você tem”. Na semana dá para ver o vídeo, marcar a série e
+            cronometrar o descanso. Em dois meses o plano volta a conversar. Se
+            quiser, o Google Agenda recebe os treinos no horário que você
+            escolher. Sem julgamento, sem promessa de correção perfeita e sem
+            enviar o seu vídeo para lugar nenhum.
           </p>
           <div className="flex flex-wrap gap-2">
             <Badge tone="vivid">
@@ -360,7 +384,7 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
 
       <section aria-labelledby="com-o-que-voce-tem" className="pt-16">
         <div className="space-y-3">
-          <Eyebrow>Novo atalho</Eyebrow>
+          <Eyebrow>Atalho rápido</Eyebrow>
           <h2 id="com-o-que-voce-tem" className="display-lg max-w-2xl">
             Treine com o que você tem.
           </h2>
@@ -423,16 +447,17 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
         <div className="space-y-3">
           <Eyebrow>Acompanha no tempo</Eyebrow>
           <h2 id="acompanha-no-tempo" className="display-lg max-w-2xl">
-            Nome, evolução e agenda.
+            Nome, semana e agenda.
           </h2>
           <p className="max-w-2xl text-base leading-relaxed text-muted">
-            O Movia não some depois de montar a semana. Ele fala com você, volta
-            em dois meses para ajustar o nível e, se você autorizar, coloca os
-            treinos no Google Agenda.
+            O Movia não some depois de montar a semana. Ele fala com você,
+            mostra o vídeo na hora do treino, deixa marcar o que foi feito e,
+            em dois meses, volta para ajustar o nível. Se você autorizar, os
+            treinos vão para o Google Agenda no horário escolhido.
           </p>
         </div>
 
-        <ul className="mt-8 grid gap-4 lg:grid-cols-3">
+        <ul className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[
             {
               icon: UserRound,
@@ -441,16 +466,22 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
                 "Perguntamos como você quer ser chamado — pode ser apelido. Isso muda o tom na entrada, no menu e na rotina. Fica só neste navegador. Pode pular.",
             },
             {
+              icon: CheckCircle2,
+              title: "Na hora do treino",
+              detail:
+                "Miniatura do vídeo em cada exercício. “Fiz esta série” ou “Pulei”. Peso opcional quando há carga. Timer de descanso no card. A semana mostra o que aconteceu.",
+            },
+            {
               icon: TrendingUp,
               title: "Evolução aos 60 dias",
               detail:
-                "Depois de cerca de dois meses, o app pergunta se o treino está fácil, adequado ou pesado. Você pode renovar no mesmo nível, subir (iniciante → intermediário → avançado) ou deixar para depois. Não é avaliação de saúde.",
+                "Depois de cerca de dois meses, o app pergunta se o treino está fácil, adequado ou pesado e usa as séries que você marcou. Você pode renovar, subir de nível ou deixar para depois. Não é avaliação de saúde.",
             },
             {
               icon: CalendarDays,
-              title: "Google Agenda",
+              title: "Agenda ou aviso local",
               detail:
-                "Opcional. Você escolhe o horário, entra com o Google, autoriza criar eventos e o Movia manda os treinos por oito semanas. Sem arquivo .ics. O vídeo da análise não vai para a conta Google.",
+                "Você escolhe o horário. Opcional: entrar com o Google e mandar os treinos por oito semanas. Sem a agenda, o MOVIA pode avisar neste aparelho — só com o site aberto.",
             },
           ].map((item) => {
             const Icon = item.icon;
@@ -580,10 +611,14 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
               { icon: Lock, text: "Nenhum vídeo enviado ou armazenado" },
               { icon: EyeOff, text: "Sem reconhecimento facial" },
               { icon: Cpu, text: "Pose calculada no navegador" },
-              { icon: ShieldCheck, text: "Nome e rotina ficam neste navegador" },
+              { icon: ShieldCheck, text: "Nome, rotina e séries ficam neste navegador" },
               {
                 icon: CalendarDays,
                 text: "Google só entra se você mandar a rotina para a Agenda",
+              },
+              {
+                icon: Bell,
+                text: "Aviso neste aparelho não passa por servidor",
               },
             ].map((item) => {
               const Icon = item.icon;
@@ -631,17 +666,22 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
               {
                 title: "Não mede carga nem esforço",
                 detail:
-                  "A câmera enxerga geometria, não a intensidade do que você está levantando.",
+                  "A câmera enxerga geometria, não a intensidade do que você está levantando. Na rotina você pode anotar o peso, se quiser — isso não entra na análise de vídeo.",
               },
               {
                 title: "Histórico só neste navegador",
                 detail:
-                  "Resultados ficam no banco local do aparelho. Trocar de browser, limpar dados do site ou usar outro celular começa do zero.",
+                  "Análises, rotina, séries marcadas e peso ficam no aparelho. Trocar de browser, limpar dados do site ou usar outro celular começa do zero.",
               },
               {
                 title: "O check-in não avalia saúde",
                 detail:
                   "Perguntar se o treino está fácil ou pesado serve só para renovar o plano. Dor ou preocupação pedem um profissional.",
+              },
+              {
+                title: "O aviso local precisa do site aberto",
+                detail:
+                  "Sem servidor, o lembrete deste aparelho não acorda o celular com o MOVIA fechado. Para avisar fora do site, use o Google Agenda.",
               },
             ].map((item) => (
               <li key={item.title} className="card-base p-5">

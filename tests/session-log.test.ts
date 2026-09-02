@@ -3,10 +3,13 @@ import { EXERCISE_CATALOG, getExerciseById } from "@/lib/catalog";
 import { PLANNER_DEFAULTS, generateWeeklyPlan } from "@/lib/planner/plan";
 import {
   dateOfWeekdayThisWeek,
+  formatLoadLabel,
   getExerciseProgress,
   localDateKey,
   logExerciseSkipped,
   logSetDone,
+  normalizeLoad,
+  sanitizeLoadDraft,
   startOfWeekMonday,
   statsSince,
   undoExerciseSession,
@@ -37,6 +40,19 @@ describe("carga externa", () => {
     expect(usesExternalLoad(getExerciseById("hammer-curl"))).toBe(true);
     expect(usesExternalLoad(undefined)).toBe(false);
     expect(EXERCISE_CATALOG.some((item) => usesExternalLoad(item))).toBe(true);
+  });
+
+  it("aceita só número e formata em kg", () => {
+    expect(normalizeLoad("3")).toBe("3kg");
+    expect(normalizeLoad(" 12,5 kg ")).toBe("12,5kg");
+    expect(normalizeLoad("40.5")).toBe("40,5kg");
+    expect(normalizeLoad("abc")).toBeUndefined();
+    expect(normalizeLoad("3kg!")).toBeUndefined();
+    expect(sanitizeLoadDraft("3abc")).toBe("3");
+    expect(sanitizeLoadDraft("12.5kg")).toBe("12,5");
+    expect(sanitizeLoadDraft("-10")).toBe("10");
+    expect(formatLoadLabel("3")).toBe("3kg");
+    expect(formatLoadLabel("abc")).toBe("");
   });
 });
 
@@ -84,7 +100,7 @@ describe("diário da série", () => {
       planCreatedAt: base.planCreatedAt,
       exerciseId: "bench-press",
       plannedSets: 3,
-      load: "40 kg",
+      load: "40kg",
       at: "2026-09-02T19:10:00.000Z",
     });
     expect(
@@ -96,7 +112,7 @@ describe("diário da série", () => {
         "bench-press",
         3,
       ).load,
-    ).toBe("40 kg");
+    ).toBe("40kg");
   });
 
   it("pula o exercício e deixa desfazer", () => {

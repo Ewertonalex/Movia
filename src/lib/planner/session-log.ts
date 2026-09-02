@@ -101,9 +101,67 @@ export function dateOfWeekdayThisWeek(
   return date;
 }
 
+const LOAD_MAX_KG = 999;
+
+function formatLoadNumber(kg: number): string {
+  if (Number.isInteger(kg)) return String(kg);
+  return String(kg).replace(".", ",");
+}
+
+/** Lê só o número do peso, ignorando "kg" e rejeitando letras. */
+export function parseLoadKg(value: string): number | undefined {
+  const cleaned = value
+    .trim()
+    .replace(/kg/gi, "")
+    .replace(/\s/g, "")
+    .replace(",", ".")
+    .replace(/\.$/, "");
+  if (!cleaned) return undefined;
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return undefined;
+  const kg = Number(cleaned);
+  if (!Number.isFinite(kg) || kg <= 0 || kg > LOAD_MAX_KG) return undefined;
+  return kg;
+}
+
+export function formatLoadKg(kg: number): string {
+  return `${formatLoadNumber(kg)}kg`;
+}
+
+export function formatLoadLabel(value: string | undefined): string {
+  if (!value) return "";
+  const kg = parseLoadKg(value);
+  return kg === undefined ? "" : formatLoadKg(kg);
+}
+
+/** Texto digitável: só dígitos e uma vírgula ou ponto. */
+export function sanitizeLoadDraft(value: string): string {
+  const withoutUnit = value.replace(/kg/gi, "");
+  let out = "";
+  let seenSep = false;
+  for (const char of withoutUnit) {
+    if (char >= "0" && char <= "9") {
+      const [whole = "", fraction = ""] = out.split(/[.,]/);
+      if (!seenSep && whole.length >= 3) continue;
+      if (seenSep && fraction.length >= 2) continue;
+      out += char;
+      continue;
+    }
+    if ((char === "," || char === ".") && !seenSep && out.length > 0) {
+      out += ",";
+      seenSep = true;
+    }
+  }
+  return out;
+}
+
+export function loadToDraft(value: string): string {
+  const kg = parseLoadKg(value);
+  return kg === undefined ? sanitizeLoadDraft(value) : formatLoadNumber(kg);
+}
+
 export function normalizeLoad(value: string): string | undefined {
-  const trimmed = value.trim().slice(0, 24);
-  return trimmed.length > 0 ? trimmed : undefined;
+  const kg = parseLoadKg(value);
+  return kg === undefined ? undefined : formatLoadKg(kg);
 }
 
 export function usesExternalLoad(exercise: Exercise | undefined): boolean {

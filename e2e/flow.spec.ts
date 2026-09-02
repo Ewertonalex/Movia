@@ -237,6 +237,15 @@ test.describe("fluxo principal do MOVIA", () => {
       page.getByRole("button", { name: /Ver como fazer/ }).first(),
     ).toBeVisible();
 
+    const loadInput = page.getByPlaceholder("Peso usado, se quiser").first();
+    await expect(loadInput).toBeVisible();
+    await loadInput.click();
+    await loadInput.pressSequentially("3abc!");
+    await expect(loadInput).toHaveValue("3");
+    await loadInput.press("Enter");
+    await expect(loadInput).toHaveValue("3");
+    await expect(loadInput).toBeVisible();
+
     await page.getByRole("button", { name: /Ver como fazer/ }).first().click();
     const preview = page.getByRole("dialog");
     await expect(preview).toBeVisible();
