@@ -78,19 +78,20 @@ describe("check-in de dois meses", () => {
 });
 
 describe("eventos da agenda", () => {
-  it("cria um evento recorrente por dia de treino, às 19h", () => {
+  it("cria um evento recorrente por dia de treino no horário escolhido", () => {
     const now = new Date("2026-09-07T10:00:00");
     const monday = nextOccurrence("seg", now);
     expect(monday.getHours()).toBe(19);
     expect(monday.getDay()).toBe(1);
 
     const plan = generateWeeklyPlan(PLANNER_DEFAULTS);
-    const events = draftWorkoutEvents(plan, now);
+    const events = draftWorkoutEvents(plan, now, 7, 30);
     expect(events).toHaveLength(plan.input.days.length);
     for (const event of events) {
       expect(event.summary.startsWith("Movia ·")).toBe(true);
       expect(event.recurrence[0]).toContain("COUNT=8");
       expect(event.description).toMatch(/Sugestão educacional/);
+      expect(event.start.dateTime).toContain("T07:30:00");
     }
   });
 });

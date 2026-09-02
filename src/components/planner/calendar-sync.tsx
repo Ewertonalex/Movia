@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { GoogleG } from "@/components/brand/google-g";
+import { SessionTimeField } from "@/components/planner/session-time-field";
 import { connectGoogleCalendar } from "@/lib/google/auth";
 import { draftWorkoutEvents, insertCalendarEvents } from "@/lib/google/calendar";
 import { isGoogleConfigured } from "@/lib/google/config";
@@ -10,6 +11,12 @@ import {
   publishProfile,
   useProfile,
 } from "@/lib/profile/storage";
+import {
+  formatSessionClock,
+  getReminderPrefsSnapshot,
+  getServerReminderPrefs,
+  subscribeToReminderPrefs,
+} from "@/lib/planner/reminders";
 import type { WeeklyPlan } from "@/lib/types";
 
 interface CalendarSyncProps {
@@ -23,7 +30,18 @@ export function CalendarSync({ plan, onSynced }: CalendarSyncProps) {
   const configured = isGoogleConfigured();
   const profile = useProfile();
   const name = firstName(profile.displayName);
-  const drafts = draftWorkoutEvents(plan);
+  const clock = useSyncExternalStore(
+    subscribeToReminderPrefs,
+    getReminderPrefsSnapshot,
+    getServerReminderPrefs,
+  );
+  const timeLabel = formatSessionClock(clock.hour, clock.minute);
+  const drafts = draftWorkoutEvents(
+    plan,
+    new Date(),
+    clock.hour,
+    clock.minute,
+  );
   const alreadySent = Boolean(plan.calendarSyncedAt);
 
   const sync = async () => {
@@ -41,8 +59,8 @@ export function CalendarSync({ plan, onSynced }: CalendarSyncProps) {
       onSynced();
       setMessage(
         created === 1
-          ? "Pronto. Seu treino já está na agenda, às 19h, por oito semanas. Você pode mudar o horário no Google Agenda."
-          : `Pronto. ${created} treinos foram para a sua agenda, às 19h, por oito semanas. Você pode mudar o horário no Google Agenda.`,
+          ? `Pronto. Seu treino já está na agenda, às ${timeLabel}, por oito semanas. Você pode mudar o horário no Google Agenda.`
+          : `Pronto. ${created} treinos foram para a sua agenda, às ${timeLabel}, por oito semanas. Você pode mudar o horário no Google Agenda.`,
       );
     } catch (error) {
       setMessage(
@@ -94,6 +112,8 @@ export function CalendarSync({ plan, onSynced }: CalendarSyncProps) {
           </div>
         </div>
 
+        <SessionTimeField legend="Que horas você treina?" />
+
         <div className="space-y-2">
           <button
             type="button"
@@ -106,8 +126,8 @@ export function CalendarSync({ plan, onSynced }: CalendarSyncProps) {
           </button>
           <p className="text-xs font-semibold tracking-tight text-muted">
             {alreadySent
-              ? "Envia de novo os treinos para o Google Agenda"
-              : "Cria os treinos no Google Agenda, às 19h"}
+              ? `Envia de novo os treinos para o Google Agenda, às ${timeLabel}`
+              : `Cria os treinos no Google Agenda, às ${timeLabel}`}
           </p>
         </div>
 

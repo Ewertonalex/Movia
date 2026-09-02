@@ -188,12 +188,12 @@ const FAQ = [
   {
     question: "Como a rotina vai para o Google Agenda?",
     answer:
-      "Na tela da Rotina, depois de gerar o plano, há o botão Continuar com o Google. O Movia cria um evento por dia de treino, às 19h, repetindo por oito semanas. Você pode mudar o horário no próprio Google Agenda. Sem isso, o treino continua só no navegador.",
+      "Na tela da Rotina, depois de gerar o plano, você escolhe o horário e toca em Continuar com o Google. O Movia cria um evento por dia de treino, repetindo por oito semanas. Sem isso, a Rotina oferece um aviso neste aparelho no mesmo horário — o aviso chega se o site estiver aberto.",
   },
   {
     question: "O que acontece depois de dois meses de rotina?",
     answer:
-      "O Movia pergunta se o treino está fácil, adequado ou pesado. Você pode renovar no mesmo nível, subir (iniciante, intermediário, avançado) ou dizer agora não — o convite volta em cerca de 60 dias. Se estiver pesado, o app não sugere subir. Não é avaliação de saúde: é só um convite para ajustar o plano.",
+      "O Movia pergunta se o treino está fácil, adequado ou pesado. Você pode renovar no mesmo nível, subir (iniciante, intermediário, avançado) ou dizer agora não — o convite volta em cerca de 60 dias. Se estiver pesado, o app não sugere subir. As séries que você marcou na semana entram nesse convite. Não é avaliação de saúde: é só um convite para ajustar o plano.",
   },
 ];
 
@@ -450,7 +450,7 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
               icon: CalendarDays,
               title: "Google Agenda",
               detail:
-                "Opcional. Você entra com o Google, autoriza criar eventos e o Movia manda os treinos às 19h, por oito semanas. Sem arquivo .ics. O vídeo da análise não vai para a conta Google.",
+                "Opcional. Você escolhe o horário, entra com o Google, autoriza criar eventos e o Movia manda os treinos por oito semanas. Sem arquivo .ics. O vídeo da análise não vai para a conta Google.",
             },
           ].map((item) => {
             const Icon = item.icon;

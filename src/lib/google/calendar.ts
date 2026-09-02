@@ -11,8 +11,9 @@ const JS_WEEKDAY: Record<WeekdayKey, number> = {
   sab: 6,
 };
 
-/** Horário padrão dos treinos na agenda — a pessoa pode alterar no Google. */
+/** Horário padrão dos treinos — a pessoa escolhe outro na Rotina. */
 export const DEFAULT_SESSION_HOUR = 19;
+export const DEFAULT_SESSION_MINUTE = 0;
 
 /** Oito semanas ≈ os dois meses do check-in. */
 export const CALENDAR_WEEK_COUNT = 8;
@@ -38,11 +39,12 @@ export function nextOccurrence(
   day: WeekdayKey,
   now = new Date(),
   hour = DEFAULT_SESSION_HOUR,
+  minute = DEFAULT_SESSION_MINUTE,
 ): Date {
   const target = JS_WEEKDAY[day];
   const next = new Date(now);
   next.setSeconds(0, 0);
-  next.setHours(hour, 0, 0, 0);
+  next.setHours(hour, minute, 0, 0);
 
   const delta = (target - now.getDay() + 7) % 7;
   if (delta === 0 && now.getTime() >= next.getTime()) {
@@ -56,6 +58,8 @@ export function nextOccurrence(
 export function draftWorkoutEvents(
   plan: WeeklyPlan,
   now = new Date(),
+  hour = DEFAULT_SESSION_HOUR,
+  minute = DEFAULT_SESSION_MINUTE,
 ): CalendarEventDraft[] {
   const timeZone = localTimeZone();
   const minutes = plan.input.minutes;
@@ -63,7 +67,7 @@ export function draftWorkoutEvents(
   return plan.days
     .filter((day) => !day.rest && day.exercises.length > 0)
     .map((day) => {
-      const start = nextOccurrence(day.day, now);
+      const start = nextOccurrence(day.day, now, hour, minute);
       const end = new Date(start.getTime() + minutes * 60 * 1000);
       const weekday = WEEKDAYS.find((item) => item.key === day.day);
       const exercises = day.exercises

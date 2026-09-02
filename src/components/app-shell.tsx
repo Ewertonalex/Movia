@@ -8,6 +8,7 @@ import { HistorySurface } from "@/components/history/history-surface";
 import { LandingSurface } from "@/components/landing/landing-surface";
 import { LibrarySurface } from "@/components/library/library-surface";
 import { PlannerSurface } from "@/components/planner/planner-surface";
+import { ReminderRuntime } from "@/components/planner/reminder-runtime";
 import { SiteHeader } from "@/components/site-header";
 import { ToastProvider, useToast } from "@/components/ui/toast";
 import { hydrateHistory } from "@/lib/analysis/history";
@@ -99,6 +100,7 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
 
   return (
     <div className="flex min-h-full flex-col">
+      <ReminderRuntime />
       {isHome ? null : (
         <SiteHeader
           active={surface}

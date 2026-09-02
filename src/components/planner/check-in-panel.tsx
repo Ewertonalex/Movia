@@ -9,6 +9,7 @@ import {
 } from "@/lib/profile/check-in";
 import { firstName } from "@/lib/profile/storage";
 import type { CheckInFeeling, WeeklyPlan } from "@/lib/types";
+import type { SessionPeriodStats } from "@/lib/planner/session-log";
 
 const FEELINGS: { id: CheckInFeeling; label: string }[] = [
   { id: "facil", label: "Está fácil" },
@@ -19,6 +20,7 @@ const FEELINGS: { id: CheckInFeeling; label: string }[] = [
 interface CheckInPanelProps {
   plan: WeeklyPlan;
   displayName: string | null;
+  stats?: SessionPeriodStats;
   onRenew: (feeling: CheckInFeeling, raiseLevel: boolean) => void;
   onKeep: (feeling: CheckInFeeling) => void;
   onDismiss: () => void;
@@ -27,6 +29,7 @@ interface CheckInPanelProps {
 export function CheckInPanel({
   plan,
   displayName,
+  stats,
   onRenew,
   onKeep,
   onDismiss,
@@ -47,6 +50,23 @@ export function CheckInPanel({
           Isso não é avaliação de saúde. É só para decidir se vale renovar o
           treino. Se algo doer ou preocupar, procure um profissional.
         </p>
+        {stats && stats.trainingDays > 0 ? (
+          <p className="text-sm leading-relaxed text-muted">
+            Você marcou {stats.trainingDays}{" "}
+            {stats.trainingDays === 1 ? "treino" : "treinos"} neste período
+            {stats.skippedExercises > 0
+              ? `, e pulou ${stats.skippedExercises} ${
+                  stats.skippedExercises === 1 ? "exercício" : "exercícios"
+                }`
+              : ""}
+            .
+          </p>
+        ) : (
+          <p className="text-sm leading-relaxed text-muted">
+            Marcar as séries na semana ajuda a lembrar como o treino tem sido,
+            na hora deste check-in.
+          </p>
+        )}
       </div>
 
       <fieldset className="space-y-2">

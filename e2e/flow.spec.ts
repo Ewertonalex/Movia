@@ -228,6 +228,12 @@ test.describe("fluxo principal do MOVIA", () => {
     await expect(page.getByText("3 dias")).toBeVisible();
     await expect(page.getByText("12 exercícios na semana")).toBeVisible();
     await expect(
+      page.getByRole("button", { name: "Fiz esta série" }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Descansar/ }).first(),
+    ).toBeVisible();
+    await expect(
       page.getByRole("button", { name: /Ver como fazer/ }).first(),
     ).toBeVisible();
 

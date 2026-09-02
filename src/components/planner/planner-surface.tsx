@@ -19,6 +19,9 @@ import { ExerciseModal } from "@/components/library/exercise-modal";
 import { NamePrompt } from "@/components/profile/name-prompt";
 import { CheckInPanel } from "@/components/planner/check-in-panel";
 import { CalendarSync } from "@/components/planner/calendar-sync";
+import { DeviceReminder } from "@/components/planner/device-reminder";
+import { SessionActions } from "@/components/planner/session-actions";
+import { WeekStrip } from "@/components/planner/week-strip";
 import { QuickStartWizard } from "@/components/quick-start/quick-start-wizard";
 import {
   Badge,
@@ -43,6 +46,15 @@ import {
   publishPlan,
   subscribeToPlan,
 } from "@/lib/planner/storage";
+import {
+  dateOfWeekdayThisWeek,
+  getServerSessionLog,
+  getSessionLogSnapshot,
+  localDateKey,
+  statsSince,
+  subscribeToSessionLog,
+  weekProgress,
+} from "@/lib/planner/session-log";
 import type {
   CheckInFeeling,
   Exercise,
@@ -109,6 +121,14 @@ export function PlannerSurface({
   const [mode, setMode] = useState<PlannerMode>("personalized");
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [preview, setPreview] = useState<Exercise | null>(null);
+  const [timer, setTimer] = useState<{ key: string; endsAt: number } | null>(
+    null,
+  );
+  const log = useSyncExternalStore(
+    subscribeToSessionLog,
+    getSessionLogSnapshot,
+    getServerSessionLog,
+  );
   const profile = useProfile();
   const greeting = firstName(profile.displayName);
 
@@ -208,6 +228,17 @@ export function PlannerSurface({
       ? progressionHint(plan.input)
       : null;
   const showSwap = Boolean(plan && isQuickPlan(plan.input));
+  const week = useMemo(
+    () => (plan ? weekProgress(plan, log) : []),
+    [plan, log],
+  );
+  const checkInStats = useMemo(
+    () =>
+      plan
+        ? statsSince(log, plan.checkIn?.answeredAt ?? plan.createdAt)
+        : undefined,
+    [plan, log],
+  );
 
   return (
     <div className="mx-auto w-full max-w-[1240px] px-4 pb-16 sm:px-6 lg:px-10">
@@ -521,10 +552,13 @@ export function PlannerSurface({
             </div>
           </div>
 
+          <WeekStrip days={week} />
+
           {plan && isCheckInDue(plan) ? (
             <CheckInPanel
               plan={plan}
               displayName={profile.displayName}
+              stats={checkInStats}
               onRenew={(feeling, raiseLevel) =>
                 answerCheckIn(feeling, "renewed", raiseLevel)
               }
@@ -550,6 +584,8 @@ export function PlannerSurface({
               })
             }
           />
+
+          <DeviceReminder plan={plan} />
 
           {adjustments.length > 0 ? (
             <div className="card-base space-y-4 p-5 sm:p-6">
@@ -594,17 +630,23 @@ export function PlannerSurface({
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {plan.days.map((day) => {
               const weekday = WEEKDAYS.find((item) => item.key === day.day);
+              const dayState = week.find((item) => item.weekday === day.day);
+              const sessionDate = localDateKey(dateOfWeekdayThisWeek(day.day));
               return (
                 <li
                   key={day.day}
                   className={cn(
                     "card-base flex h-full flex-col p-5",
                     day.rest && "bg-canvas/70",
+                    dayState?.isToday && "border-deep/50",
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="eyebrow">{weekday?.full}</p>
+                      <p className="eyebrow">
+                        {weekday?.full}
+                        {dayState?.isToday ? " · hoje" : ""}
+                      </p>
                       <p className="mt-1 text-xl font-[830] tracking-tight">
                         {day.rest ? "Recuperação" : day.sessionLabel}
                       </p>
@@ -626,6 +668,11 @@ export function PlannerSurface({
                       <p className="mt-2 text-sm text-muted">
                         {day.focus?.join(" · ")}
                       </p>
+                      {dayState && dayState.total > 0 ? (
+                        <p className="mt-1 text-xs font-semibold text-deep">
+                          {dayState.finished} de {dayState.total} exercícios
+                        </p>
+                      ) : null}
                       <ul className="mt-4 space-y-3">
                         {day.exercises.map((exercise) => {
                           const key = `${day.day}-${exercise.exerciseId}`;
@@ -712,6 +759,17 @@ export function PlannerSurface({
                                     {formatRest(exercise.restSeconds)} de
                                     descanso
                                   </p>
+                                  <SessionActions
+                                    exercise={exercise}
+                                    catalogExercise={catalogExercise}
+                                    weekday={day.day}
+                                    date={sessionDate}
+                                    planCreatedAt={plan.createdAt}
+                                    log={log}
+                                    timer={timer}
+                                    timerKey={key}
+                                    onTimer={setTimer}
+                                  />
                                   {showSwap ? (
                                     <>
                                       <p className="mt-2 text-[11px] font-semibold text-muted">
