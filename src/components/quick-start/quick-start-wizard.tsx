@@ -174,7 +174,7 @@ export function QuickStartWizard({ catalog }: QuickStartWizardProps) {
       ) : null}
 
       {step === 2 ? (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid gap-2 sm:grid-cols-3">
           {LEVELS.map((level) => (
             <OptionButton
               key={level}
@@ -286,7 +286,7 @@ export function QuickStartWizard({ catalog }: QuickStartWizardProps) {
       ) : null}
 
       {step === 6 ? (
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           {QUICK_START_MINUTES.map((minutes) => (
             <OptionButton
               key={minutes}

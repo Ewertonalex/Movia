@@ -91,7 +91,7 @@ export function OptionButton({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "rounded-2xl border px-3 py-3 text-sm font-semibold transition",
+        "min-w-0 rounded-2xl border px-2.5 py-3 text-center text-[13px] leading-snug font-semibold break-words whitespace-normal transition sm:px-3 sm:text-sm",
         active
           ? "border-deep bg-vivid/12 text-deep"
           : "border-line bg-canvas text-muted hover:border-vivid hover:text-ink",

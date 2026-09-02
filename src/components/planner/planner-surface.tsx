@@ -388,7 +388,7 @@ export function PlannerSurface({
             <div className="grid gap-6 lg:grid-cols-2">
               <fieldset className="space-y-3">
                 <legend className="eyebrow">Experiência</legend>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid gap-2 sm:grid-cols-3">
                   {LEVELS.map((level) => (
                     <OptionButton
                       key={level}
@@ -407,7 +407,7 @@ export function PlannerSurface({
 
               <fieldset className="space-y-3">
                 <legend className="eyebrow">Tempo por treino</legend>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {SESSION_MINUTES.map((minutes) => (
                     <OptionButton
                       key={minutes}
