@@ -38,6 +38,7 @@ import {
   SEXES,
   WEEKDAYS,
   generateWeeklyPlan,
+  parseMeasureInput,
   validatePlannerInput,
 } from "@/lib/planner/plan";
 import {
@@ -95,6 +96,33 @@ function withoutGear(input: PlannerInput): PlannerInput {
     days: input.days,
     muscles: input.muscles,
   };
+}
+
+function MeasureField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <label className="space-y-2">
+      <span className="eyebrow">{label}</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        pattern="[0-9]*"
+        maxLength={3}
+        value={value > 0 ? String(value) : ""}
+        onFocus={(event) => event.currentTarget.select()}
+        onChange={(event) => onChange(parseMeasureInput(event.target.value))}
+        className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-lg font-[800] tracking-tight outline-none transition focus:border-vivid"
+      />
+    </label>
+  );
 }
 
 function isQuickPlan(input: PlannerInput): boolean {
@@ -309,38 +337,20 @@ export function PlannerSurface({
         ) : (
           <div className="card-base space-y-8 p-5 sm:p-8">
             <div className="grid gap-5 sm:grid-cols-2">
-              <label className="space-y-2">
-                <span className="eyebrow">Altura (cm)</span>
-                <input
-                  type="number"
-                  min={120}
-                  max={230}
-                  value={input.heightCm}
-                  onChange={(event) =>
-                    setInput((current) => ({
-                      ...current,
-                      heightCm: Number(event.target.value),
-                    }))
-                  }
-                  className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-lg font-[800] tracking-tight outline-none transition focus:border-vivid"
-                />
-              </label>
-              <label className="space-y-2">
-                <span className="eyebrow">Peso (kg)</span>
-                <input
-                  type="number"
-                  min={35}
-                  max={250}
-                  value={input.weightKg}
-                  onChange={(event) =>
-                    setInput((current) => ({
-                      ...current,
-                      weightKg: Number(event.target.value),
-                    }))
-                  }
-                  className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-lg font-[800] tracking-tight outline-none transition focus:border-vivid"
-                />
-              </label>
+              <MeasureField
+                label="Altura (cm)"
+                value={input.heightCm}
+                onChange={(heightCm) =>
+                  setInput((current) => ({ ...current, heightCm }))
+                }
+              />
+              <MeasureField
+                label="Peso (kg)"
+                value={input.weightKg}
+                onChange={(weightKg) =>
+                  setInput((current) => ({ ...current, weightKg }))
+                }
+              />
             </div>
 
             <fieldset className="space-y-3">

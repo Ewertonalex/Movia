@@ -106,6 +106,12 @@ export const LIMITS = {
   minMuscles: 1,
 } as const;
 
+/** Digita só número. Campo vazio vira 0 (a validação pede a faixa depois). */
+export function parseMeasureInput(raw: string, maxDigits = 3): number {
+  const digits = raw.replace(/\D/g, "").replace(/^0+/, "").slice(0, maxDigits);
+  return digits === "" ? 0 : Number(digits);
+}
+
 export const PLANNER_DEFAULTS: PlannerInput = {
   heightCm: 175,
   weightKg: 75,

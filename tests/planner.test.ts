@@ -7,6 +7,7 @@ import {
   PLANNER_DEFAULTS,
   exercisesPerSession,
   generateWeeklyPlan,
+  parseMeasureInput,
   planAdjustments,
   prescriptionFor,
   validatePlannerInput,
@@ -19,6 +20,14 @@ const base: PlannerInput = PLANNER_DEFAULTS;
 describe("validação do planejador", () => {
   it("aceita os valores padrão", () => {
     expect(validatePlannerInput(base)).toEqual([]);
+  });
+
+  it("permite apagar altura e peso sem deixar zero na frente", () => {
+    expect(parseMeasureInput("")).toBe(0);
+    expect(parseMeasureInput("0")).toBe(0);
+    expect(parseMeasureInput("0175")).toBe(175);
+    expect(parseMeasureInput("75kg")).toBe(75);
+    expect(parseMeasureInput("180")).toBe(180);
   });
 
   it("recusa altura, peso, dias e músculos fora dos limites", () => {
