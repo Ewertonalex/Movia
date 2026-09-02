@@ -188,10 +188,28 @@ export interface PlanAdjustment {
   detail: string;
 }
 
+export type CheckInFeeling = "facil" | "adequado" | "dificil";
+
+export type CheckInStatus = "pending" | "renewed" | "kept" | "dismissed";
+
+export interface PlanCheckIn {
+  status: CheckInStatus;
+  feeling?: CheckInFeeling;
+  answeredAt?: string;
+}
+
 export interface WeeklyPlan {
   createdAt: string;
   input: PlannerInput;
   rotation: number;
   adjustments: PlanAdjustment[];
   days: PlannedDay[];
+  checkIn?: PlanCheckIn;
+  calendarSyncedAt?: string;
+}
+
+export interface MoviaProfile {
+  displayName: string | null;
+  skippedName: boolean;
+  googleEmail?: string | null;
 }

@@ -22,7 +22,7 @@ test.describe("tela inicial", () => {
       page.getByRole("button", { name: "Montar meu treino" }),
     ).toBeVisible();
     await expect(page.getByText("Processado no seu dispositivo")).toBeVisible();
-    await expect(page.getByText("Sem cadastro")).toBeVisible();
+    await expect(page.getByText("Google só se quiser a agenda")).toBeVisible();
     await expect(page.getByText("Vídeos não são armazenados")).toBeVisible();
     await expect(page.locator("video source")).toHaveAttribute(
       "src",

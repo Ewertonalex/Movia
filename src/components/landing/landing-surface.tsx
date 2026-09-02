@@ -3,11 +3,13 @@
 import { Lock, ShieldCheck, Sparkles, VideoOff } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { MoviaMark } from "@/components/brand/movia-mark";
+import { NamePrompt } from "@/components/profile/name-prompt";
 import { Badge, buttonClasses } from "@/components/ui/primitives";
+import { firstName, useProfile } from "@/lib/profile/storage";
 
 const TRUST = [
   { icon: ShieldCheck, label: "Processado no seu dispositivo" },
-  { icon: Lock, label: "Sem cadastro" },
+  { icon: Lock, label: "Google só se quiser a agenda" },
   { icon: VideoOff, label: "Vídeos não são armazenados" },
 ] as const;
 
@@ -17,6 +19,8 @@ interface LandingSurfaceProps {
 
 export function LandingSurface({ onStart }: LandingSurfaceProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const profile = useProfile();
+  const greeting = firstName(profile.displayName);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -72,8 +76,12 @@ export function LandingSurface({ onStart }: LandingSurfaceProps) {
           </h1>
 
           <p className="max-w-md text-lg leading-relaxed text-muted">
-            Você não precisa de academia para começar.
+            {greeting
+              ? `Oi, ${greeting}. Você não precisa de academia para começar.`
+              : "Você não precisa de academia para começar."}
           </p>
+
+          <NamePrompt compact />
 
           <div>
             <button

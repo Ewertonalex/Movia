@@ -27,7 +27,7 @@ describe("renderização no servidor", () => {
 
   it("traz selos de confiança na entrada", () => {
     expect(html).toContain("Processado no seu dispositivo");
-    expect(html).toContain("Sem cadastro");
+    expect(html).toContain("Google só se quiser a agenda");
     expect(html).toContain("Vídeos não são armazenados");
   });
 

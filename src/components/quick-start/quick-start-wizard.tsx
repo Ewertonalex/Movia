@@ -123,7 +123,10 @@ export function QuickStartWizard({ catalog }: QuickStartWizardProps) {
       setError("Escolha pelo menos um grupo muscular ou corpo inteiro.");
       return;
     }
-    publishPlan(generateEquipmentAwarePlan(toPlannerInput(input), catalog));
+    publishPlan({
+      ...generateEquipmentAwarePlan(toPlannerInput(input), catalog),
+      checkIn: { status: "pending" },
+    });
   };
 
   return (

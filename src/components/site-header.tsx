@@ -3,6 +3,7 @@
 import { ShieldCheck, Sparkles } from "lucide-react";
 import { MoviaMark } from "@/components/brand/movia-mark";
 import type { Surface } from "@/lib/types";
+import { firstName, useProfile } from "@/lib/profile/storage";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS: { id: Surface; label: string; short: string }[] = [
@@ -25,6 +26,8 @@ export function SiteHeader({
   onBrandClick,
   onHistoryClick,
 }: SiteHeaderProps) {
+  const greeting = firstName(useProfile().displayName);
+
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-canvas/85 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[1240px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:flex-nowrap sm:px-6 lg:px-10">
@@ -38,6 +41,11 @@ export function SiteHeader({
           <span className="text-[1.35rem] leading-none font-[850] tracking-[-0.05em] lowercase">
             movia
           </span>
+          {greeting ? (
+            <span className="hidden text-sm font-semibold text-muted sm:inline">
+              oi, {greeting}
+            </span>
+          ) : null}
         </button>
 
         <nav

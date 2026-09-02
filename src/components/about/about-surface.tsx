@@ -177,6 +177,16 @@ const FAQ = [
     answer:
       "No atalho rápido o treino sai só com peso corporal. Se você não souber o que tem, o Movia assume nenhum equipamento — o cenário mais restritivo — para o treino ser sempre possível de fazer. Dá para trocar um exercício por outro do mesmo grupo, desde que caiba no que você tem.",
   },
+  {
+    question: "O Movia pede meu nome e login Google?",
+    answer:
+      "O nome de tratamento fica neste navegador, para o app falar com você. O login Google é opcional e só entra se você quiser mandar a rotina para a Agenda. Aí o Google pede permissão para criar eventos. O vídeo da análise continua no seu aparelho e não vai para a conta Google.",
+  },
+  {
+    question: "O que acontece depois de dois meses de rotina?",
+    answer:
+      "O Movia pergunta como você tem se sentido com aquele treino e se quer renovar. Se você aceitar subir o nível, a rotina é gerada de novo no próximo degrau (iniciante, intermediário, avançado). Não é avaliação de saúde — é só um convite para ajustar o plano.",
+  },
 ];
 
 export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
@@ -509,7 +519,7 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
               { icon: Lock, text: "Nenhum vídeo enviado ou armazenado" },
               { icon: EyeOff, text: "Sem reconhecimento facial" },
               { icon: Cpu, text: "Pose calculada no navegador" },
-              { icon: ShieldCheck, text: "Altura, peso e rotina ficam locais" },
+              { icon: ShieldCheck, text: "Nome e rotina ficam neste navegador" },
             ].map((item) => {
               const Icon = item.icon;
               return (

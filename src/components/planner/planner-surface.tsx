@@ -13,6 +13,9 @@ import {
   Timer,
 } from "lucide-react";
 import { useMemo, useState, useSyncExternalStore } from "react";
+import { NamePrompt } from "@/components/profile/name-prompt";
+import { CheckInPanel } from "@/components/planner/check-in-panel";
+import { CalendarSync } from "@/components/planner/calendar-sync";
 import { QuickStartWizard } from "@/components/quick-start/quick-start-wizard";
 import {
   Badge,
@@ -38,6 +41,7 @@ import {
   subscribeToPlan,
 } from "@/lib/planner/storage";
 import type {
+  CheckInFeeling,
   Exercise,
   MuscleGroup,
   PlannerGoal,
@@ -45,6 +49,7 @@ import type {
   PlannerLevel,
   PlannerSex,
   WeekdayKey,
+  WeeklyPlan,
 } from "@/lib/types";
 import {
   generateEquipmentAwarePlan,
@@ -52,6 +57,8 @@ import {
   progressionHint,
   swapExerciseInPlan,
 } from "@/lib/workout-generator/generator";
+import { isCheckInDue, nextPlannerLevel } from "@/lib/profile/check-in";
+import { firstName, useProfile } from "@/lib/profile/storage";
 import { cn, formatRest } from "@/lib/utils";
 
 interface PlannerSurfaceProps {
@@ -96,6 +103,8 @@ export function PlannerSurface({
   const [errors, setErrors] = useState<string[]>([]);
   const [mode, setMode] = useState<PlannerMode>("personalized");
   const [swapKey, setSwapKey] = useState<string | null>(null);
+  const profile = useProfile();
+  const greeting = firstName(profile.displayName);
 
   const input: PlannerInput = draft ?? plan?.input ?? PLANNER_DEFAULTS;
   const setInput = (updater: (current: PlannerInput) => PlannerInput) =>
@@ -124,7 +133,10 @@ export function PlannerSurface({
     const validation = validatePlannerInput(payload);
     setErrors(validation);
     if (validation.length > 0) return;
-    publishPlan(generateWeeklyPlan(payload, CORE_CATALOG, rotation));
+    publishPlan({
+      ...generateWeeklyPlan(payload, CORE_CATALOG, rotation),
+      checkIn: { status: "pending" },
+    });
     setDraft(null);
     setSwapKey(null);
   };
@@ -132,15 +144,15 @@ export function PlannerSurface({
   const reorganize = () => {
     if (!plan) return;
     const nextRotation = (plan.rotation ?? 0) + 1;
-    if (isQuickPlan(plan.input)) {
-      publishPlan(
-        generateEquipmentAwarePlan(plan.input, catalog, nextRotation),
-      );
-    } else {
-      publishPlan(
-        generateWeeklyPlan(withoutGear(plan.input), CORE_CATALOG, nextRotation),
-      );
-    }
+    const next = isQuickPlan(plan.input)
+      ? generateEquipmentAwarePlan(plan.input, catalog, nextRotation)
+      : generateWeeklyPlan(withoutGear(plan.input), CORE_CATALOG, nextRotation);
+    publishPlan({
+      ...next,
+      createdAt: plan.createdAt,
+      checkIn: plan.checkIn,
+      calendarSyncedAt: plan.calendarSyncedAt,
+    });
     setSwapKey(null);
   };
 
@@ -148,6 +160,34 @@ export function PlannerSurface({
     if (!plan) return;
     publishPlan(swapExerciseInPlan(plan, day, fromId, toId, catalog));
     setSwapKey(null);
+  };
+
+  const rebuild = (
+    nextInput: PlannerInput,
+    checkIn: WeeklyPlan["checkIn"],
+  ) => {
+    const rebuilt = isQuickPlan(nextInput)
+      ? generateEquipmentAwarePlan(nextInput, catalog, 0)
+      : generateWeeklyPlan(withoutGear(nextInput), CORE_CATALOG, 0);
+    publishPlan({ ...rebuilt, checkIn });
+    setDraft(null);
+    setSwapKey(null);
+  };
+
+  const answerCheckIn = (
+    feeling: CheckInFeeling,
+    status: "renewed" | "kept",
+    raiseLevel: boolean,
+  ) => {
+    if (!plan) return;
+    const answeredAt = new Date().toISOString();
+    const level = raiseLevel
+      ? nextPlannerLevel(plan.input.level)
+      : plan.input.level;
+    rebuild(
+      { ...plan.input, level },
+      { status, feeling, answeredAt },
+    );
   };
 
   const totalExercises = useMemo(
@@ -173,10 +213,18 @@ export function PlannerSurface({
             <br />
             <span className="text-vivid">Do seu jeito.</span>
           </h1>
-          <p className="max-w-xl text-lg leading-relaxed text-muted">
-            Informe seus dados, escolha os dias e os músculos. A rotina é montada
-            aqui mesmo, com regras claras de volume e descanso.
-          </p>
+          {greeting ? (
+            <p className="max-w-xl text-lg leading-relaxed text-muted">
+              Oi, {greeting}. Informe seus dados, escolha os dias e os músculos.
+              A rotina é montada aqui mesmo, com regras claras de volume e
+              descanso.
+            </p>
+          ) : (
+            <p className="max-w-xl text-lg leading-relaxed text-muted">
+              Informe seus dados, escolha os dias e os músculos. A rotina é montada
+              aqui mesmo, com regras claras de volume e descanso.
+            </p>
+          )}
           <Badge tone="vivid">
             <Sparkles className="size-3.5" aria-hidden />
             Planejamento inteligente no dispositivo
@@ -201,6 +249,8 @@ export function PlannerSurface({
         <h2 id="planner-form" className="display-md">
           Monte sua semana
         </h2>
+
+        <NamePrompt />
 
         <div className="grid gap-3 sm:grid-cols-2">
           <ModeCard
@@ -464,6 +514,36 @@ export function PlannerSurface({
               </Badge>
             </div>
           </div>
+
+          {plan && isCheckInDue(plan) ? (
+            <CheckInPanel
+              plan={plan}
+              displayName={profile.displayName}
+              onRenew={(feeling, raiseLevel) =>
+                answerCheckIn(feeling, "renewed", raiseLevel)
+              }
+              onKeep={(feeling) => answerCheckIn(feeling, "kept", false)}
+              onDismiss={() =>
+                publishPlan({
+                  ...plan,
+                  checkIn: {
+                    status: "dismissed",
+                    answeredAt: new Date().toISOString(),
+                  },
+                })
+              }
+            />
+          ) : null}
+
+          <CalendarSync
+            plan={plan}
+            onSynced={() =>
+              publishPlan({
+                ...plan,
+                calendarSyncedAt: new Date().toISOString(),
+              })
+            }
+          />
 
           {adjustments.length > 0 ? (
             <div className="card-base space-y-4 p-5 sm:p-6">

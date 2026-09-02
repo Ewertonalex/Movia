@@ -68,6 +68,9 @@ Dois pontos de atenção:
 - `better-sqlite3` só entra se `MOVIA_USE_SQLITE=1` (uso local). Na Netlify o
   app usa o catálogo embutido — o disco do servidor some entre deploys.
 - Os arquivos de `public/mediapipe` são gerados no build e ficam fora do Git.
+- Para o login Google + Agenda, defina `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (cliente
+  OAuth **Web**, origens autorizadas do site, API Calendar ligada). Sem essa
+  chave o botão da agenda explica a configuração e não tenta autenticar.
 
 ## Arquitetura
 
