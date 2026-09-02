@@ -10,9 +10,9 @@ O mesmo produto reúne quatro superfícies:
 | Superfície         | O que faz                                                                 |
 | ------------------ | ------------------------------------------------------------------------- |
 | **Exercícios**     | Biblioteca com 23 exercícios reais em 9 grupos musculares, busca e filtros |
-| **Rotina**         | Planejador semanal determinístico com calibração por sexo, salvo no navegador |
+| **Rotina**         | Planejador semanal, nome de tratamento, check-in aos 60 dias e envio opcional ao Google Agenda |
 | **Analisar vídeo** | Upload local, detecção de repetições/passadas e feedback com cues          |
-| **Sobre**          | Propósito, método de análise, referências abertas, privacidade e limites   |
+| **Sobre**          | Propósito, método, privacidade, evolução do treino e limites               |
 
 ## Como rodar localmente
 

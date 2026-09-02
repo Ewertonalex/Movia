@@ -14,7 +14,9 @@ import {
   ShieldCheck,
   Sparkles,
   Timer,
+  TrendingUp,
   TriangleAlert,
+  UserRound,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { Badge, buttonClasses, Eyebrow } from "@/components/ui/primitives";
@@ -77,8 +79,9 @@ const PILLARS: {
     bullets: [
       "Rotina personalizada: o mesmo fluxo de sempre, sem pedir local nem equipamento",
       "Atalho 'Treine com o que você tem' para montar em menos de um minuto",
-      "Séries por experiência e prescrição por objetivo",
-      "Descanso e repetições calibrados pelo sexo informado",
+      "Nome de tratamento para o app falar com você neste navegador",
+      "Check-in aos 60 dias para renovar ou subir o nível",
+      "Opcional: mandar os treinos para o Google Agenda",
       "Fica salvo só no seu navegador, pronto na próxima visita",
     ],
     action: "Montar minha rotina",
@@ -180,12 +183,17 @@ const FAQ = [
   {
     question: "O Movia pede meu nome e login Google?",
     answer:
-      "O nome de tratamento fica neste navegador, para o app falar com você. O login Google é opcional e só entra se você quiser mandar a rotina para a Agenda. Aí o Google pede permissão para criar eventos. O vídeo da análise continua no seu aparelho e não vai para a conta Google.",
+      "O nome de tratamento fica neste navegador, para o app falar com você — pode ser apelido, e dá para pular. O login Google é opcional e só aparece se você quiser mandar a rotina para a Agenda. Aí o Google pede permissão para criar eventos. O token não é guardado no aparelho. O vídeo da análise continua no seu aparelho e não vai para a conta Google.",
+  },
+  {
+    question: "Como a rotina vai para o Google Agenda?",
+    answer:
+      "Na tela da Rotina, depois de gerar o plano, há o botão Continuar com o Google. O Movia cria um evento por dia de treino, às 19h, repetindo por oito semanas. Você pode mudar o horário no próprio Google Agenda. Sem isso, o treino continua só no navegador.",
   },
   {
     question: "O que acontece depois de dois meses de rotina?",
     answer:
-      "O Movia pergunta como você tem se sentido com aquele treino e se quer renovar. Se você aceitar subir o nível, a rotina é gerada de novo no próximo degrau (iniciante, intermediário, avançado). Não é avaliação de saúde — é só um convite para ajustar o plano.",
+      "O Movia pergunta se o treino está fácil, adequado ou pesado. Você pode renovar no mesmo nível, subir (iniciante, intermediário, avançado) ou dizer agora não — o convite volta em cerca de 60 dias. Se estiver pesado, o app não sugere subir. Não é avaliação de saúde: é só um convite para ajustar o plano.",
   },
 ];
 
@@ -218,10 +226,11 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
             que dá para aplicar na série seguinte.
           </p>
           <p className="max-w-xl text-base leading-relaxed text-muted">
-            A entrada apresenta a marca. Depois, você escolhe a rotina de
-            sempre ou o atalho “Treine com o que você tem”. Sem julgamento, sem
-            promessa de correção perfeita e sem enviar o seu vídeo para lugar
-            nenhum.
+            A entrada apresenta a marca e pergunta como você quer ser chamado.
+            Depois, você escolhe a rotina de sempre ou o atalho “Treine com o
+            que você tem”. Em dois meses o plano volta a conversar. Se quiser,
+            o Google Agenda recebe os treinos. Sem julgamento, sem promessa de
+            correção perfeita e sem enviar o seu vídeo para lugar nenhum.
           </p>
           <div className="flex flex-wrap gap-2">
             <Badge tone="vivid">
@@ -410,6 +419,58 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
         </button>
       </section>
 
+      <section aria-labelledby="acompanha-no-tempo" className="pt-16">
+        <div className="space-y-3">
+          <Eyebrow>Acompanha no tempo</Eyebrow>
+          <h2 id="acompanha-no-tempo" className="display-lg max-w-2xl">
+            Nome, evolução e agenda.
+          </h2>
+          <p className="max-w-2xl text-base leading-relaxed text-muted">
+            O Movia não some depois de montar a semana. Ele fala com você, volta
+            em dois meses para ajustar o nível e, se você autorizar, coloca os
+            treinos no Google Agenda.
+          </p>
+        </div>
+
+        <ul className="mt-8 grid gap-4 lg:grid-cols-3">
+          {[
+            {
+              icon: UserRound,
+              title: "Nome de tratamento",
+              detail:
+                "Perguntamos como você quer ser chamado — pode ser apelido. Isso muda o tom na entrada, no menu e na rotina. Fica só neste navegador. Pode pular.",
+            },
+            {
+              icon: TrendingUp,
+              title: "Evolução aos 60 dias",
+              detail:
+                "Depois de cerca de dois meses, o app pergunta se o treino está fácil, adequado ou pesado. Você pode renovar no mesmo nível, subir (iniciante → intermediário → avançado) ou deixar para depois. Não é avaliação de saúde.",
+            },
+            {
+              icon: CalendarDays,
+              title: "Google Agenda",
+              detail:
+                "Opcional. Você entra com o Google, autoriza criar eventos e o Movia manda os treinos às 19h, por oito semanas. Sem arquivo .ics. O vídeo da análise não vai para a conta Google.",
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.title} className="card-base p-6">
+                <span className="flex size-11 items-center justify-center rounded-2xl bg-vivid/12 text-deep">
+                  <Icon className="size-5" />
+                </span>
+                <p className="mt-4 text-xl font-[830] tracking-tight">
+                  {item.title}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {item.detail}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
       <section aria-labelledby="como-funciona" className="pt-16">
         <div className="space-y-3">
           <Eyebrow>Como a análise funciona</Eyebrow>
@@ -520,6 +581,10 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
               { icon: EyeOff, text: "Sem reconhecimento facial" },
               { icon: Cpu, text: "Pose calculada no navegador" },
               { icon: ShieldCheck, text: "Nome e rotina ficam neste navegador" },
+              {
+                icon: CalendarDays,
+                text: "Google só entra se você mandar a rotina para a Agenda",
+              },
             ].map((item) => {
               const Icon = item.icon;
               return (
@@ -572,6 +637,11 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
                 title: "Histórico só neste navegador",
                 detail:
                   "Resultados ficam no banco local do aparelho. Trocar de browser, limpar dados do site ou usar outro celular começa do zero.",
+              },
+              {
+                title: "O check-in não avalia saúde",
+                detail:
+                  "Perguntar se o treino está fácil ou pesado serve só para renovar o plano. Dor ou preocupação pedem um profissional.",
               },
             ].map((item) => (
               <li key={item.title} className="card-base p-5">
