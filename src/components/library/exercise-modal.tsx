@@ -10,7 +10,7 @@ import type { Exercise } from "@/lib/types";
 interface ExerciseModalProps {
   exercise: Exercise;
   onClose: () => void;
-  onAnalyze: (exercise: Exercise) => void;
+  onAnalyze?: (exercise: Exercise) => void;
 }
 
 export function ExerciseModal({
@@ -160,7 +160,7 @@ export function ExerciseModal({
               Assistir execução correta
               <ExternalLink className="size-4" aria-hidden />
             </a>
-            {exercise.analyzable ? (
+            {exercise.analyzable && onAnalyze ? (
               <button
                 type="button"
                 onClick={() => onAnalyze(exercise)}

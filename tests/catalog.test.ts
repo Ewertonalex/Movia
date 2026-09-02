@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EXERCISE_CATALOG, MUSCLE_GROUPS, CORE_EXERCISES, getExerciseById } from "@/lib/catalog";
 import { reconcileWithCatalog } from "@/lib/db/reconcile";
 import { ANALYSIS_PROFILES } from "@/lib/analysis/profiles";
+import { SUBSTITUTION_GRAPH } from "@/lib/workout-generator/substitution-graph";
 import type { Exercise } from "@/lib/types";
 
 describe("catálogo de exercícios", () => {
@@ -16,6 +17,18 @@ describe("catálogo de exercícios", () => {
     }
     for (const original of CORE_EXERCISES) {
       expect(EXERCISE_CATALOG.some((item) => item.id === original.id)).toBe(true);
+    }
+  });
+
+  it("amplia a biblioteca com extras em todos os grupos musculares", () => {
+    const extras = EXERCISE_CATALOG.filter(
+      (item) => !CORE_EXERCISES.some((original) => original.id === item.id),
+    );
+    expect(extras.length).toBeGreaterThanOrEqual(30);
+    const extraGroups = new Set(extras.map((item) => item.muscleGroup));
+    expect(extraGroups.size).toBe(MUSCLE_GROUPS.length);
+    for (const group of MUSCLE_GROUPS) {
+      expect(extraGroups.has(group), group).toBe(true);
     }
   });
 
@@ -43,6 +56,16 @@ describe("catálogo de exercícios", () => {
     const orders = new Set(EXERCISE_CATALOG.map((item) => item.sortOrder));
     expect(ids.size).toBe(EXERCISE_CATALOG.length);
     expect(orders.size).toBe(EXERCISE_CATALOG.length);
+  });
+
+  it("só aponta substituições para exercícios que existem no catálogo", () => {
+    const ids = new Set(EXERCISE_CATALOG.map((item) => item.id));
+    for (const [origin, alternatives] of Object.entries(SUBSTITUTION_GRAPH)) {
+      expect(ids.has(origin), origin).toBe(true);
+      for (const alternative of alternatives) {
+        expect(ids.has(alternative), `${origin} → ${alternative}`).toBe(true);
+      }
+    }
   });
 
   it("preenche todos os campos obrigatórios do modelo", () => {

@@ -9,7 +9,7 @@ O mesmo produto reúne quatro superfícies:
 
 | Superfície         | O que faz                                                                 |
 | ------------------ | ------------------------------------------------------------------------- |
-| **Exercícios**     | Biblioteca com 23 exercícios reais em 9 grupos musculares, busca e filtros |
+| **Exercícios**     | Biblioteca com dezenas de exercícios reais em 9 grupos musculares, cada um com vídeo, busca e filtros |
 | **Rotina**         | Planejador semanal, nome de tratamento, check-in aos 60 dias e envio opcional ao Google Agenda |
 | **Analisar vídeo** | Upload local, detecção de repetições/passadas e feedback com cues          |
 | **Sobre**          | Propósito, método, privacidade, evolução do treino e limites               |
@@ -87,7 +87,7 @@ src/
     planner/           geração do plano e persistência local
     analysis/          geometria, métricas, ciclos, regras, pose e histórico
     db/                Drizzle + SQLite com reconciliação do catálogo
-    catalog.ts         os 23 exercícios como fonte embutida
+    catalog.ts         catálogo embutido (23 da rotina clássica + extras da biblioteca)
 tests/                 Vitest
 e2e/                   Playwright
 ```

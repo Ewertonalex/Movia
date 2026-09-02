@@ -227,6 +227,21 @@ test.describe("fluxo principal do MOVIA", () => {
     await expect(page.getByText("Recuperação").first()).toBeVisible();
     await expect(page.getByText("3 dias")).toBeVisible();
     await expect(page.getByText("12 exercícios na semana")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Ver como fazer/ }).first(),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: /Ver como fazer/ }).first().click();
+    const preview = page.getByRole("dialog");
+    await expect(preview).toBeVisible();
+    await expect(
+      preview.getByRole("link", { name: /Assistir execução correta/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: /Sua rotina/ }),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(preview).toBeHidden();
 
     const stored = await page.evaluate(() =>
       window.localStorage.getItem("movia-weekly-plan-v1"),

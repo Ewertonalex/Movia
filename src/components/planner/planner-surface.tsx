@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   CalendarDays,
   Dumbbell,
+  Play,
   RefreshCw,
   RotateCcw,
   ScanLine,
@@ -12,7 +13,9 @@ import {
   Sparkles,
   Timer,
 } from "lucide-react";
+import Image from "next/image";
 import { useMemo, useState, useSyncExternalStore } from "react";
+import { ExerciseModal } from "@/components/library/exercise-modal";
 import { NamePrompt } from "@/components/profile/name-prompt";
 import { CheckInPanel } from "@/components/planner/check-in-panel";
 import { CalendarSync } from "@/components/planner/calendar-sync";
@@ -23,7 +26,7 @@ import {
   Eyebrow,
   OptionButton,
 } from "@/components/ui/primitives";
-import { CORE_CATALOG, MUSCLE_GROUPS } from "@/lib/catalog";
+import { CORE_CATALOG, MUSCLE_GROUPS, getExerciseById, youtubeThumbnail } from "@/lib/catalog";
 import {
   GOALS,
   LEVELS,
@@ -64,6 +67,7 @@ import { cn, formatRest } from "@/lib/utils";
 interface PlannerSurfaceProps {
   catalog: Exercise[];
   onOpenLibrary: () => void;
+  onAnalyze?: (exercise: Exercise) => void;
 }
 
 type PlannerMode = "personalized" | "quick";
@@ -93,6 +97,7 @@ function isQuickPlan(input: PlannerInput): boolean {
 export function PlannerSurface({
   catalog,
   onOpenLibrary,
+  onAnalyze,
 }: PlannerSurfaceProps) {
   const plan = useSyncExternalStore(
     subscribeToPlan,
@@ -103,6 +108,7 @@ export function PlannerSurface({
   const [errors, setErrors] = useState<string[]>([]);
   const [mode, setMode] = useState<PlannerMode>("personalized");
   const [swapKey, setSwapKey] = useState<string | null>(null);
+  const [preview, setPreview] = useState<Exercise | null>(null);
   const profile = useProfile();
   const greeting = firstName(profile.displayName);
 
@@ -636,76 +642,124 @@ export function PlannerSurface({
                                   usedIds,
                                 )
                               : [];
+                          const catalogExercise = getExerciseById(
+                            exercise.exerciseId,
+                            catalog,
+                          );
 
                           return (
                             <li
                               key={key}
                               className="rounded-2xl border border-line bg-canvas/60 p-3"
                             >
-                              <div className="flex items-start justify-between gap-3">
-                                <p className="text-sm font-[800] tracking-tight">
-                                  {exercise.name}
-                                </p>
-                                {exercise.analyzable ? (
-                                  <ScanLine
-                                    className="mt-0.5 size-3.5 shrink-0 text-deep"
-                                    aria-label="Exercício com análise por vídeo"
-                                  />
-                                ) : null}
-                              </div>
-                              <p className="mt-1 text-xs text-muted">
-                                {exercise.equipment}
-                              </p>
-                              <p className="mt-2 text-xs font-semibold text-ink">
-                                {exercise.sets} × {exercise.reps} reps ·{" "}
-                                {formatRest(exercise.restSeconds)} de descanso
-                              </p>
-                              {showSwap ? (
-                                <>
-                                  <p className="mt-2 text-[11px] font-semibold text-muted">
-                                    {exercise.analyzable
-                                      ? "👁 Análise Movia disponível"
-                                      : "Análise de movimento em breve"}
-                                  </p>
+                              <div className="flex items-start gap-3">
+                                {catalogExercise ? (
                                   <button
                                     type="button"
-                                    aria-expanded={open}
-                                    onClick={() =>
-                                      setSwapKey(open ? null : key)
-                                    }
-                                    className="mt-2 text-xs font-semibold text-deep hover:underline"
+                                    onClick={() => setPreview(catalogExercise)}
+                                    aria-label={`Ver como fazer ${exercise.name}`}
+                                    className="group relative w-[88px] shrink-0 overflow-hidden rounded-xl bg-night"
                                   >
-                                    Trocar exercício
-                                  </button>
-                                  {open ? (
-                                    <div className="mt-2 space-y-1">
-                                      {options.length === 0 ? (
-                                        <p className="text-xs text-muted">
-                                          Não há alternativa cadastrada para o
-                                          equipamento e o nível atuais.
-                                        </p>
-                                      ) : (
-                                        options.map((option) => (
-                                          <button
-                                            key={option.id}
-                                            type="button"
-                                            onClick={() =>
-                                              swap(
-                                                day.day,
-                                                exercise.exerciseId,
-                                                option.id,
-                                              )
-                                            }
-                                            className="block w-full rounded-xl border border-line bg-surface px-3 py-2 text-left text-xs font-semibold hover:border-vivid"
-                                          >
-                                            {option.name}
-                                          </button>
-                                        ))
+                                    <Image
+                                      src={youtubeThumbnail(
+                                        catalogExercise.videoId,
                                       )}
-                                    </div>
+                                      alt=""
+                                      width={176}
+                                      height={132}
+                                      unoptimized
+                                      className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-[1.04]"
+                                    />
+                                    <span className="absolute inset-0 flex items-center justify-center bg-night/25 transition group-hover:bg-night/10">
+                                      <span className="flex size-7 items-center justify-center rounded-full bg-surface/95 text-deep">
+                                        <Play
+                                          className="size-3.5 translate-x-px fill-current"
+                                          aria-hidden
+                                        />
+                                      </span>
+                                    </span>
+                                  </button>
+                                ) : null}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-start justify-between gap-3">
+                                    {catalogExercise ? (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setPreview(catalogExercise)
+                                        }
+                                        className="text-left text-sm font-[800] tracking-tight hover:text-deep"
+                                      >
+                                        {exercise.name}
+                                      </button>
+                                    ) : (
+                                      <p className="text-sm font-[800] tracking-tight">
+                                        {exercise.name}
+                                      </p>
+                                    )}
+                                    {exercise.analyzable ? (
+                                      <ScanLine
+                                        className="mt-0.5 size-3.5 shrink-0 text-deep"
+                                        aria-label="Exercício com análise por vídeo"
+                                      />
+                                    ) : null}
+                                  </div>
+                                  <p className="mt-1 text-xs text-muted">
+                                    {exercise.equipment}
+                                  </p>
+                                  <p className="mt-2 text-xs font-semibold text-ink">
+                                    {exercise.sets} × {exercise.reps} reps ·{" "}
+                                    {formatRest(exercise.restSeconds)} de
+                                    descanso
+                                  </p>
+                                  {showSwap ? (
+                                    <>
+                                      <p className="mt-2 text-[11px] font-semibold text-muted">
+                                        {exercise.analyzable
+                                          ? "👁 Análise Movia disponível"
+                                          : "Análise de movimento em breve"}
+                                      </p>
+                                      <button
+                                        type="button"
+                                        aria-expanded={open}
+                                        onClick={() =>
+                                          setSwapKey(open ? null : key)
+                                        }
+                                        className="mt-2 text-xs font-semibold text-deep hover:underline"
+                                      >
+                                        Trocar exercício
+                                      </button>
+                                      {open ? (
+                                        <div className="mt-2 space-y-1">
+                                          {options.length === 0 ? (
+                                            <p className="text-xs text-muted">
+                                              Não há alternativa cadastrada para
+                                              o equipamento e o nível atuais.
+                                            </p>
+                                          ) : (
+                                            options.map((option) => (
+                                              <button
+                                                key={option.id}
+                                                type="button"
+                                                onClick={() =>
+                                                  swap(
+                                                    day.day,
+                                                    exercise.exerciseId,
+                                                    option.id,
+                                                  )
+                                                }
+                                                className="block w-full rounded-xl border border-line bg-surface px-3 py-2 text-left text-xs font-semibold hover:border-vivid"
+                                              >
+                                                {option.name}
+                                              </button>
+                                            ))
+                                          )}
+                                        </div>
+                                      ) : null}
+                                    </>
                                   ) : null}
-                                </>
-                              ) : null}
+                                </div>
+                              </div>
                             </li>
                           );
                         })}
@@ -737,6 +791,21 @@ export function PlannerSurface({
           </p>
         </section>
       )}
+
+      {preview ? (
+        <ExerciseModal
+          exercise={preview}
+          onClose={() => setPreview(null)}
+          onAnalyze={
+            onAnalyze
+              ? (exercise) => {
+                  setPreview(null);
+                  onAnalyze(exercise);
+                }
+              : undefined
+          }
+        />
+      ) : null}
     </div>
   );
 }

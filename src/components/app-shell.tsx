@@ -130,6 +130,7 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
           <PlannerSurface
             catalog={catalog}
             onOpenLibrary={() => navigate("exercises")}
+            onAnalyze={handleAnalyzeExercise}
           />
         ) : null}
 
