@@ -12,31 +12,23 @@ function renderApp(): string {
 describe("renderização no servidor", () => {
   const html = renderApp();
 
-  it("entrega o produto real já no primeiro carregamento", () => {
-    expect(html).toContain("Sua rotina.");
-    expect(html).toContain("Do seu jeito.");
-    expect(html).toContain("Planejador semanal");
-    expect(html).toContain("Monte sua semana");
+  it("entrega a tela inicial da marca já no primeiro carregamento", () => {
+    expect(html).toContain("Seu movimento.");
+    expect(html).toContain("Mais consciente.");
+    expect(html).toContain("Montar meu treino");
+    expect(html).toContain("/brand/hero.mp4");
   });
 
-  it("mostra a navegação com as três superfícies", () => {
-    expect(html).toContain("Exercícios");
-    expect(html).toContain("Rotina");
-    expect(html).toContain("Analisar vídeo");
-    expect(html).toContain("Minhas análises");
+  it("não joga a pessoa no formulário antes do convite", () => {
+    expect(html).not.toContain("Altura (cm)");
+    expect(html).not.toContain("Gerar minha rotina inteligente");
+    expect(html).not.toContain("Navegação principal");
   });
 
-  it("traz a microcopy obrigatória de privacidade", () => {
-    expect(html).toContain("Análise visual responsável");
-    expect(html).toContain("Processado no dispositivo");
-    expect(html).toContain("Sem reconhecimento facial");
-  });
-
-  it("apresenta o formulário da rotina no primeiro carregamento", () => {
-    expect(html).toContain("Altura (cm)");
-    expect(html).toContain("Peso (kg)");
-    expect(html).toContain("Gerar minha rotina inteligente");
-    expect(html).toContain("Hipertrofia");
+  it("traz selos de confiança na entrada", () => {
+    expect(html).toContain("Processado no seu dispositivo");
+    expect(html).toContain("Sem cadastro");
+    expect(html).toContain("Vídeos não são armazenados");
   });
 
   it("não depende de skeleton nem de conteúdo genérico", () => {

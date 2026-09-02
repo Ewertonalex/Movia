@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { EXERCISE_CATALOG } from "../src/lib/catalog";
+import { enterApp } from "./helpers";
 
 async function openAnalyze(page: Page) {
   await page
@@ -7,20 +9,52 @@ async function openAnalyze(page: Page) {
     .click();
 }
 
-test.describe("fluxo principal do MOVIA", () => {
+test.describe("tela inicial", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
   });
 
-  test("abre direto no planejador de rotina", async ({ page }) => {
+  test("apresenta a marca, o vídeo e um único convite", async ({ page }) => {
+    await expect(
+      page.getByRole("heading", { level: 1, name: /Seu movimento/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Montar meu treino" }),
+    ).toBeVisible();
+    await expect(page.getByText("Processado no seu dispositivo")).toBeVisible();
+    await expect(page.getByText("Sem cadastro")).toBeVisible();
+    await expect(page.getByText("Vídeos não são armazenados")).toBeVisible();
+    await expect(page.locator("video source")).toHaveAttribute(
+      "src",
+      "/brand/hero.mp4",
+    );
+    await expect(
+      page.getByRole("navigation", { name: "Navegação principal" }),
+    ).toHaveCount(0);
+    await expect(page.locator("iframe")).toHaveCount(0);
+    const overflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+  });
+
+  test("o convite leva ao planejador", async ({ page }) => {
+    await enterApp(page);
     await expect(
       page.getByRole("heading", { level: 1, name: /Sua rotina/ }),
     ).toBeVisible();
-    await expect(page.getByText("Monte sua semana")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Gerar minha rotina inteligente" }),
     ).toBeVisible();
-    await expect(page.locator("iframe")).toHaveCount(0);
+  });
+});
+
+test.describe("fluxo principal do MOVIA", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await enterApp(page);
   });
 
   test("navega entre as superfícies", async ({ page }) => {
@@ -80,7 +114,7 @@ test.describe("fluxo principal do MOVIA", () => {
     ).toBeVisible();
   });
 
-  test("lista os 23 exercícios agrupados e permite buscar", async ({ page }) => {
+  test("lista os exercícios agrupados e permite buscar", async ({ page }) => {
     await page
       .getByRole("navigation", { name: "Navegação principal" })
       .getByRole("button", { name: "Exercícios" })
@@ -88,19 +122,21 @@ test.describe("fluxo principal do MOVIA", () => {
 
     await expect(page.getByRole("listitem").first()).toBeVisible();
     const cards = page.locator("main ul > li");
-    await expect(cards).toHaveCount(23);
+    await expect(cards).toHaveCount(EXERCISE_CATALOG.length);
 
     const search = page.getByRole("searchbox", { name: "Buscar exercícios" });
-    await search.fill("agachamento");
+    await search.fill("agachamento livre");
     await expect(page.locator("main ul > li")).toHaveCount(1);
 
     await search.fill("zzzz");
     await expect(page.getByText("Nenhum exercício encontrado")).toBeVisible();
     await page.getByRole("button", { name: "Limpar filtros" }).click();
-    await expect(page.locator("main ul > li")).toHaveCount(23);
+    await expect(page.locator("main ul > li")).toHaveCount(EXERCISE_CATALOG.length);
 
     await page.getByRole("button", { name: "Peito", exact: true }).click();
-    await expect(page.locator("main ul > li")).toHaveCount(3);
+    await expect(page.locator("main ul > li")).toHaveCount(
+      EXERCISE_CATALOG.filter((item) => item.muscleGroup === "Peito").length,
+    );
   });
 
   test("abre o detalhe do exercício e fecha com Escape", async ({ page }) => {
@@ -251,7 +287,22 @@ test.describe("fluxo principal do MOVIA", () => {
     );
   });
 
-  test("a marca volta para a rotina", async ({ page }) => {
+  test("monta treino rápido com o que a pessoa tem", async ({ page }) => {
+    await page
+      .getByRole("navigation", { name: "Navegação principal" })
+      .getByRole("button", { name: "Rotina" })
+      .click();
+
+    await page.getByRole("button", { name: "Treine com o que você tem" }).click();
+    await expect(page.getByRole("button", { name: "Surpreenda-me" })).toBeVisible();
+    await page.getByRole("button", { name: "Surpreenda-me" }).click();
+
+    await expect(page.getByText("Progressão sem equipamento")).toBeVisible();
+    await expect(page.getByText("Análise de movimento em breve").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Trocar exercício" }).first()).toBeVisible();
+  });
+
+  test("a marca volta ao início", async ({ page }) => {
     await openAnalyze(page);
     await page
       .getByRole("button", { name: "Ver uma análise de demonstração" })
@@ -261,7 +312,10 @@ test.describe("fluxo principal do MOVIA", () => {
 
     await page.getByRole("button", { name: /MOVIA/ }).click();
     await expect(
-      page.getByRole("heading", { level: 1, name: /Sua rotina/ }),
+      page.getByRole("heading", { level: 1, name: /Seu movimento/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Montar meu treino" }),
     ).toBeVisible();
   });
 
@@ -289,17 +343,24 @@ test.describe("fluxo principal do MOVIA", () => {
   });
 
   test("não gera rolagem horizontal", async ({ page }) => {
-    for (const surface of ["Exercícios", "Rotina", "Analisar vídeo"]) {
+    const overflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    );
+    expect(overflow, "Rotina").toBeLessThanOrEqual(1);
+
+    for (const surface of ["Exercícios", "Analisar vídeo"]) {
       await page
         .getByRole("navigation", { name: "Navegação principal" })
         .getByRole("button", { name: surface })
         .click();
-      const overflow = await page.evaluate(
+      const next = await page.evaluate(
         () =>
           document.documentElement.scrollWidth -
           document.documentElement.clientWidth,
       );
-      expect(overflow, surface).toBeLessThanOrEqual(1);
+      expect(next, surface).toBeLessThanOrEqual(1);
     }
   });
 });

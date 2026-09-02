@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { EXERCISE_CATALOG, MUSCLE_GROUPS, getExerciseById } from "@/lib/catalog";
+import { EXERCISE_CATALOG, MUSCLE_GROUPS, CORE_EXERCISES, getExerciseById } from "@/lib/catalog";
 import { reconcileWithCatalog } from "@/lib/db/reconcile";
 import { ANALYSIS_PROFILES } from "@/lib/analysis/profiles";
 import type { Exercise } from "@/lib/types";
 
 describe("catálogo de exercícios", () => {
-  it("tem 23 exercícios em 9 grupos musculares", () => {
-    expect(EXERCISE_CATALOG).toHaveLength(23);
+  it("tem os 23 exercícios originais e amplia o catálogo sem remover nenhum", () => {
+    expect(CORE_EXERCISES).toHaveLength(23);
+    expect(EXERCISE_CATALOG.length).toBeGreaterThan(23);
     expect(MUSCLE_GROUPS).toHaveLength(9);
     const groups = new Set(EXERCISE_CATALOG.map((item) => item.muscleGroup));
     expect(groups.size).toBe(9);
     for (const group of groups) {
       expect(MUSCLE_GROUPS).toContain(group);
+    }
+    for (const original of CORE_EXERCISES) {
+      expect(EXERCISE_CATALOG.some((item) => item.id === original.id)).toBe(true);
     }
   });
 
@@ -26,13 +30,19 @@ describe("catálogo de exercícios", () => {
     for (const exercise of analyzable) {
       expect(exercise.analysisProfile).not.toBeNull();
     }
+    for (const extra of EXERCISE_CATALOG.filter(
+      (item) => !CORE_EXERCISES.some((original) => original.id === item.id),
+    )) {
+      expect(extra.analyzable, extra.id).toBe(false);
+      expect(extra.analysisProfile, extra.id).toBeNull();
+    }
   });
 
   it("mantém ids e ordem de exibição únicos", () => {
     const ids = new Set(EXERCISE_CATALOG.map((item) => item.id));
     const orders = new Set(EXERCISE_CATALOG.map((item) => item.sortOrder));
-    expect(ids.size).toBe(23);
-    expect(orders.size).toBe(23);
+    expect(ids.size).toBe(EXERCISE_CATALOG.length);
+    expect(orders.size).toBe(EXERCISE_CATALOG.length);
   });
 
   it("preenche todos os campos obrigatórios do modelo", () => {
@@ -43,6 +53,8 @@ describe("catálogo de exercícios", () => {
       expect(exercise.steps.every((step) => step.length > 5)).toBe(true);
       expect(exercise.commonMistake.length).toBeGreaterThan(10);
       expect(exercise.secondaryMuscles.length).toBeGreaterThan(0);
+      expect(exercise.equipmentRequired.length).toBeGreaterThan(0);
+      expect(exercise.locationCompatible.length).toBeGreaterThan(0);
       expect(["Iniciante", "Intermediário", "Avançado"]).toContain(
         exercise.difficulty,
       );
@@ -74,7 +86,7 @@ describe("fallback do banco de dados", () => {
     const merged = reconcileWithCatalog(stale);
     const squat = merged.find((item) => item.id === "bodyweight-squat");
 
-    expect(merged).toHaveLength(23);
+    expect(merged).toHaveLength(EXERCISE_CATALOG.length);
     expect(squat?.videoId).toBe("l83R5PblSMA");
     expect(squat?.analyzable).toBe(true);
     expect(squat?.analysisProfile).toBe("squat");

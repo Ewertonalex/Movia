@@ -13,6 +13,10 @@ import type {
   WeeklyPlan,
 } from "@/lib/types";
 import { formatRest } from "@/lib/utils";
+import {
+  constrainCatalog,
+  resolveForEquipment,
+} from "@/lib/workout-generator/availability";
 
 export const WEEKDAYS: { key: WeekdayKey; label: string; full: string }[] = [
   { key: "seg", label: "SEG", full: "Segunda-feira" },
@@ -49,7 +53,7 @@ export const MUSCLE_BUNDLES: MuscleGroup[][] = [
   ["Peito", "Ombros", "Tríceps"],
   ["Costas", "Bíceps"],
   ["Quadríceps", "Glúteos e posterior", "Panturrilhas"],
-  ["Core"],
+  ["Abdômen"],
 ];
 
 export interface Prescription {
@@ -116,7 +120,7 @@ export const PLANNER_DEFAULTS: PlannerInput = {
     "Quadríceps",
     "Glúteos e posterior",
     "Ombros",
-    "Core",
+    "Abdômen",
   ],
 };
 
@@ -182,6 +186,7 @@ export function planAdjustments(input: PlannerInput): PlanAdjustment[] {
 }
 
 export function exercisesPerSession(minutes: number): number {
+  if (minutes <= 20) return 2;
   if (minutes <= 35) return 3;
   if (minutes <= 50) return 4;
   if (minutes <= 65) return 5;
@@ -248,20 +253,37 @@ export function generateWeeklyPlan(
   const prescription = prescriptionFor(input.goal, input.sex);
   const baseSets = LEVEL_SETS[input.level];
   const femaleCalibration = usesFemaleCalibration(input.sex);
+  /** Sem local/equipamento, devolve o catálogo inteiro — o plano clássico não muda. */
+  const workingCatalog = constrainCatalog(
+    catalog,
+    input.location,
+    input.equipment,
+  );
 
   const selectedMuscles = bundles.flat();
   const pool = new Map<MuscleGroup, Exercise[]>();
   for (const muscle of selectedMuscles) {
-    pool.set(
-      muscle,
-      catalog
-        .filter(
-          (exercise) =>
-            exercise.muscleGroup === muscle &&
-            allowedForLevel(exercise, input.level),
-        )
-        .sort((a, b) => a.sortOrder - b.sortOrder),
-    );
+    const seen = new Set<string>();
+    const resolved: Exercise[] = [];
+    const sources = workingCatalog
+      .filter(
+        (exercise) =>
+          exercise.muscleGroup === muscle &&
+          allowedForLevel(exercise, input.level),
+      )
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+    for (const source of sources) {
+      const next = resolveForEquipment(
+        source,
+        input.equipment,
+        catalog,
+        seen,
+      );
+      if (!next) continue;
+      seen.add(next.id);
+      resolved.push(next);
+    }
+    pool.set(muscle, resolved);
   }
 
   const usage = new Map<string, number>();

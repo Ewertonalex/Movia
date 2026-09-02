@@ -12,9 +12,9 @@ function sourceFiles(directory: string): string[] {
 }
 
 describe("vídeos externos", () => {
-  it("usa 23 vídeos reais e distintos do YouTube", () => {
+  it("usa vídeos reais e distintos do YouTube", () => {
     const ids = EXERCISE_CATALOG.map((exercise) => exercise.videoId);
-    expect(new Set(ids).size).toBe(23);
+    expect(new Set(ids).size).toBe(EXERCISE_CATALOG.length);
 
     for (const exercise of EXERCISE_CATALOG) {
       expect(exercise.videoUrl).toBe(

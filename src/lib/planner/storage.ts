@@ -1,9 +1,13 @@
 import { PLANNER_DEFAULTS, planAdjustments } from "@/lib/planner/plan";
-import type { WeeklyPlan } from "@/lib/types";
+import type { MuscleGroup, WeeklyPlan } from "@/lib/types";
 
 export const PLAN_STORAGE_KEY = "movia-weekly-plan-v1";
 /** Chave usada nas primeiras versões do produto, lida apenas para migração. */
 export const LEGACY_PLAN_STORAGE_KEY = "form-weekly-plan-v1";
+
+function renameMuscleGroup(group: MuscleGroup): MuscleGroup {
+  return (group as string) === "Core" ? "Abdômen" : group;
+}
 
 function isWeeklyPlan(value: unknown): value is WeeklyPlan {
   if (typeof value !== "object" || value === null) return false;
@@ -18,12 +22,24 @@ function isWeeklyPlan(value: unknown): value is WeeklyPlan {
 
 /** Planos salvos antes da calibração por sexo seguem a referência padrão. */
 export function migrateStoredPlan(plan: WeeklyPlan): WeeklyPlan {
-  const input = { ...plan.input, sex: plan.input.sex ?? PLANNER_DEFAULTS.sex };
+  const input = {
+    ...plan.input,
+    sex: plan.input.sex ?? PLANNER_DEFAULTS.sex,
+    muscles: plan.input.muscles.map(renameMuscleGroup),
+  };
   return {
     ...plan,
     input,
     rotation: plan.rotation ?? 0,
     adjustments: plan.adjustments ?? planAdjustments(input),
+    days: plan.days.map((day) => ({
+      ...day,
+      focus: day.focus?.map(renameMuscleGroup),
+      exercises: day.exercises.map((exercise) => ({
+        ...exercise,
+        muscleGroup: renameMuscleGroup(exercise.muscleGroup),
+      })),
+    })),
   };
 }
 

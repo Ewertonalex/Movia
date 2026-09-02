@@ -67,6 +67,8 @@ function rowToExercise(row: ExerciseRow): Exercise {
     videoId: row.videoId,
     videoSource: row.videoSource,
     videoUrl: row.videoUrl,
+    equipmentRequired: ["nenhum"],
+    locationCompatible: ["casa", "academia", "ar_livre", "outro"],
   };
 }
 
@@ -100,9 +102,23 @@ export async function loadCatalog(): Promise<CatalogPayload> {
       db.insert(schema.exercises)
         .values(
           EXERCISE_CATALOG.map((exercise) => ({
-            ...exercise,
+            id: exercise.id,
+            name: exercise.name,
+            muscleGroup: exercise.muscleGroup,
             secondaryMuscles: JSON.stringify(exercise.secondaryMuscles),
+            equipment: exercise.equipment,
+            difficulty: exercise.difficulty,
+            motion: exercise.motion,
+            description: exercise.description,
             steps: JSON.stringify(exercise.steps),
+            commonMistake: exercise.commonMistake,
+            analyzable: exercise.analyzable,
+            analysisProfile: exercise.analysisProfile,
+            cameraView: exercise.cameraView,
+            sortOrder: exercise.sortOrder,
+            videoId: exercise.videoId,
+            videoSource: exercise.videoSource,
+            videoUrl: exercise.videoUrl,
           })),
         )
         .run();

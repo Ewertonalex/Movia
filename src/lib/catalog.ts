@@ -1,3 +1,4 @@
+import { applyCatalogGear, EXTRA_EXERCISES, type CatalogSeed } from "./catalog-gear";
 import type { Exercise, MuscleGroup } from "./types";
 
 export const MUSCLE_GROUPS: MuscleGroup[] = [
@@ -8,16 +9,16 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
   "Tríceps",
   "Quadríceps",
   "Glúteos e posterior",
-  "Core",
+  "Abdômen",
   "Panturrilhas",
 ];
 
-export const EXERCISE_CATALOG: Exercise[] = [
+export const CORE_EXERCISES: CatalogSeed[] = [
   {
     id: "push-up",
     name: "Flexão de braço",
     muscleGroup: "Peito",
-    secondaryMuscles: ["Tríceps", "Ombros", "Core"],
+    secondaryMuscles: ["Tríceps", "Ombros", "Abdômen"],
     equipment: "Peso corporal",
     difficulty: "Iniciante",
     motion: "pushup",
@@ -90,7 +91,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
     id: "pull-up",
     name: "Barra fixa",
     muscleGroup: "Costas",
-    secondaryMuscles: ["Bíceps", "Core"],
+    secondaryMuscles: ["Bíceps", "Abdômen"],
     equipment: "Barra fixa",
     difficulty: "Avançado",
     motion: "pullup",
@@ -114,7 +115,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
     id: "barbell-row",
     name: "Remada curvada",
     muscleGroup: "Costas",
-    secondaryMuscles: ["Bíceps", "Posterior", "Core"],
+    secondaryMuscles: ["Bíceps", "Posterior", "Abdômen"],
     equipment: "Barra",
     difficulty: "Intermediário",
     motion: "row",
@@ -163,7 +164,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
     id: "shoulder-press",
     name: "Desenvolvimento",
     muscleGroup: "Ombros",
-    secondaryMuscles: ["Tríceps", "Core"],
+    secondaryMuscles: ["Tríceps", "Abdômen"],
     equipment: "Halteres",
     difficulty: "Intermediário",
     motion: "overhead",
@@ -330,7 +331,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
     id: "bodyweight-squat",
     name: "Agachamento livre",
     muscleGroup: "Quadríceps",
-    secondaryMuscles: ["Glúteos", "Core", "Posterior"],
+    secondaryMuscles: ["Glúteos", "Abdômen", "Posterior"],
     equipment: "Peso corporal",
     difficulty: "Iniciante",
     motion: "squat",
@@ -355,7 +356,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
     id: "reverse-lunge",
     name: "Afundo caminhando",
     muscleGroup: "Quadríceps",
-    secondaryMuscles: ["Glúteos", "Posterior", "Core"],
+    secondaryMuscles: ["Glúteos", "Posterior", "Abdômen"],
     equipment: "Peso corporal",
     difficulty: "Iniciante",
     motion: "lunge",
@@ -404,7 +405,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
     id: "romanian-deadlift",
     name: "Levantamento romeno",
     muscleGroup: "Glúteos e posterior",
-    secondaryMuscles: ["Costas", "Core"],
+    secondaryMuscles: ["Costas", "Abdômen"],
     equipment: "Barra",
     difficulty: "Intermediário",
     motion: "hinge",
@@ -429,7 +430,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
     id: "hip-thrust",
     name: "Hip thrust",
     muscleGroup: "Glúteos e posterior",
-    secondaryMuscles: ["Posterior", "Core"],
+    secondaryMuscles: ["Posterior", "Abdômen"],
     equipment: "Banco e barra",
     difficulty: "Intermediário",
     motion: "bridge",
@@ -452,7 +453,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
     id: "glute-bridge",
     name: "Ponte de glúteos",
     muscleGroup: "Glúteos e posterior",
-    secondaryMuscles: ["Core"],
+    secondaryMuscles: ["Abdômen"],
     equipment: "Peso corporal",
     difficulty: "Iniciante",
     motion: "bridge",
@@ -474,7 +475,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   {
     id: "plank",
     name: "Prancha",
-    muscleGroup: "Core",
+    muscleGroup: "Abdômen",
     secondaryMuscles: ["Ombros", "Glúteos"],
     equipment: "Peso corporal",
     difficulty: "Iniciante",
@@ -497,7 +498,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   {
     id: "dead-bug",
     name: "Dead bug",
-    muscleGroup: "Core",
+    muscleGroup: "Abdômen",
     secondaryMuscles: ["Flexores do quadril"],
     equipment: "Peso corporal",
     difficulty: "Iniciante",
@@ -522,7 +523,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   {
     id: "crunch",
     name: "Abdominal curto",
-    muscleGroup: "Core",
+    muscleGroup: "Abdômen",
     secondaryMuscles: ["Flexores do quadril"],
     equipment: "Peso corporal",
     difficulty: "Iniciante",
@@ -568,6 +569,13 @@ export const EXERCISE_CATALOG: Exercise[] = [
     videoUrl: "https://www.youtube.com/watch?v=Zep-wKHWkNM",
   },
 ];
+
+export const CORE_CATALOG: Exercise[] = applyCatalogGear(CORE_EXERCISES);
+
+export const EXERCISE_CATALOG: Exercise[] = applyCatalogGear([
+  ...CORE_EXERCISES,
+  ...EXTRA_EXERCISES,
+]);
 
 export const PROFILE_TO_EXERCISE_ID = {
   squat: "bodyweight-squat",

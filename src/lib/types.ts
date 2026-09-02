@@ -6,7 +6,7 @@ export type MuscleGroup =
   | "Tríceps"
   | "Quadríceps"
   | "Glúteos e posterior"
-  | "Core"
+  | "Abdômen"
   | "Panturrilhas";
 
 export type Difficulty = "Iniciante" | "Intermediário" | "Avançado";
@@ -14,6 +14,30 @@ export type Difficulty = "Iniciante" | "Intermediário" | "Avançado";
 export type AnalysisProfile = "squat" | "pushup" | "curl" | "lunge";
 
 export type CameraView = "Lateral" | "Frontal" | "Frontal ou lateral";
+
+export type EquipmentTag =
+  | "nenhum"
+  | "halteres"
+  | "elastico"
+  | "kettlebell"
+  | "caneleira"
+  | "banco"
+  | "colchonete"
+  | "barra"
+  | "anilhas"
+  | "rack"
+  | "cabos"
+  | "smith"
+  | "leg_press"
+  | "maquinas"
+  | "barra_fixa";
+
+export type LocationTag = "casa" | "academia" | "ar_livre" | "outro";
+
+export interface EquipmentAlternative {
+  missing: EquipmentTag;
+  substituteExerciseId: string;
+}
 
 export interface Exercise {
   id: string;
@@ -33,9 +57,19 @@ export interface Exercise {
   videoId: string;
   videoSource: string;
   videoUrl: string;
+  /** Equipamentos necessários. `["nenhum"]` = peso corporal. */
+  equipmentRequired: EquipmentTag[];
+  locationCompatible: LocationTag[];
+  equipmentAlternatives?: EquipmentAlternative[];
 }
 
-export type Surface = "exercises" | "routine" | "analyze" | "about" | "history";
+export type Surface =
+  | "home"
+  | "exercises"
+  | "routine"
+  | "analyze"
+  | "about"
+  | "history";
 
 export type Severity = "atencao" | "ajuste" | "ok";
 
@@ -121,6 +155,11 @@ export interface PlannerInput {
   minutes: number;
   days: WeekdayKey[];
   muscles: MuscleGroup[];
+  /** Ausente nos planos antigos: o motor não filtra por local. */
+  location?: LocationTag;
+  /** Ausente = catálogo completo (comportamento histórico). `[]` = nenhum equipamento. */
+  equipment?: EquipmentTag[];
+  equipmentUnknown?: boolean;
 }
 
 export interface PlannedExercise {

@@ -6,6 +6,7 @@ import {
   Cpu,
   EyeOff,
   Gauge,
+  Home,
   Library,
   ListChecks,
   Lock,
@@ -74,7 +75,8 @@ const PILLARS: {
     summary:
       "Um plano semanal montado no seu dispositivo, com regras claras de volume e descanso.",
     bullets: [
-      "Distribuição por blocos musculares ao longo da semana",
+      "Rotina personalizada: o mesmo fluxo de sempre, sem pedir local nem equipamento",
+      "Atalho 'Treine com o que você tem' para montar em menos de um minuto",
       "Séries por experiência e prescrição por objetivo",
       "Descanso e repetições calibrados pelo sexo informado",
       "Fica salvo só no seu navegador, pronto na próxima visita",
@@ -133,7 +135,7 @@ const FAQ = [
   {
     question: "Por que só quatro exercícios têm análise por vídeo?",
     answer:
-      "Porque cada movimento precisa de referências próprias, validadas contra o que a câmera realmente consegue enxergar. Preferimos quatro movimentos com critérios claros a vinte com palpite. Os outros 19 exercícios estão na biblioteca com vídeo e instruções.",
+      "Porque cada movimento precisa de referências próprias, validadas contra o que a câmera realmente consegue enxergar. Preferimos quatro movimentos com critérios claros a dezenas com palpite. Os demais exercícios estão na biblioteca com vídeo e instruções.",
   },
   {
     question: "O MOVIA identifica meu rosto?",
@@ -164,6 +166,16 @@ const FAQ = [
     question: "Por que a rotina pergunta o sexo?",
     answer:
       "Porque mulheres apresentam, em média, maior resistência à fadiga e recuperação mais rápida entre séries, o que sustenta descansos mais curtos e faixas de repetição um pouco maiores. O plano mostra exatamente o que mudou por causa disso. Sem essa informação, usamos a referência padrão — e vale lembrar que a variação entre pessoas do mesmo sexo é maior do que a diferença entre as médias.",
+  },
+  {
+    question: "O que é “Treine com o que você tem”?",
+    answer:
+      "É um atalho rápido, separado da rotina personalizada. Você informa local, o que tem à mão e o tempo disponível. O Movia monta um treino executável com isso. A rotina personalizada não pede local nem equipamento e continua igual ao que já era.",
+  },
+  {
+    question: "E se eu não tiver nenhum equipamento?",
+    answer:
+      "No atalho rápido o treino sai só com peso corporal. Se você não souber o que tem, o Movia assume nenhum equipamento — o cenário mais restritivo — para o treino ser sempre possível de fazer. Dá para trocar um exercício por outro do mesmo grupo, desde que caiba no que você tem.",
   },
 ];
 
@@ -196,8 +208,10 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
             que dá para aplicar na série seguinte.
           </p>
           <p className="max-w-xl text-base leading-relaxed text-muted">
-            Sem julgamento, sem promessa de correção perfeita e sem enviar o seu
-            vídeo para lugar nenhum.
+            A entrada apresenta a marca. Depois, você escolhe a rotina de
+            sempre ou o atalho “Treine com o que você tem”. Sem julgamento, sem
+            promessa de correção perfeita e sem enviar o seu vídeo para lugar
+            nenhum.
           </p>
           <div className="flex flex-wrap gap-2">
             <Badge tone="vivid">
@@ -323,6 +337,67 @@ export function AboutSurface({ catalog, onNavigate }: AboutSurfaceProps) {
             );
           })}
         </ul>
+      </section>
+
+      <section aria-labelledby="com-o-que-voce-tem" className="pt-16">
+        <div className="space-y-3">
+          <Eyebrow>Novo atalho</Eyebrow>
+          <h2 id="com-o-que-voce-tem" className="display-lg max-w-2xl">
+            Treine com o que você tem.
+          </h2>
+          <p className="max-w-2xl text-base leading-relaxed text-muted">
+            A rotina personalizada não mudou. Este caminho é extra: para quem
+            quer um treino agora, com o espaço e o material que existem — ou
+            sem material nenhum.
+          </p>
+        </div>
+
+        <ul className="mt-8 grid gap-4 lg:grid-cols-3">
+          {[
+            {
+              icon: Home,
+              title: "Onde você está",
+              detail:
+                "Casa, ao ar livre ou outro espaço. O treino só usa movimentos que cabem nesse lugar.",
+            },
+            {
+              icon: Sparkles,
+              title: "O que você tem à mão",
+              detail:
+                "Nenhum, o básico ou o que estiver disponível. Se não souber, o Movia assume nenhum — o treino continua executável.",
+            },
+            {
+              icon: ListChecks,
+              title: "Trocar exercício",
+              detail:
+                "Cada movimento tem alternativas do mesmo grupo muscular, filtradas pelo que você marcou. Sem palpite.",
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.title} className="card-base p-6">
+                <span className="flex size-11 items-center justify-center rounded-2xl bg-vivid/12 text-deep">
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <p className="mt-4 text-xl font-[830] tracking-tight">
+                  {item.title}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {item.detail}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+
+        <button
+          type="button"
+          onClick={() => onNavigate("routine")}
+          className={buttonClasses("primary", "mt-8")}
+        >
+          <Sparkles className="size-4" aria-hidden />
+          Ir para o planejador
+        </button>
       </section>
 
       <section aria-labelledby="como-funciona" className="pt-16">

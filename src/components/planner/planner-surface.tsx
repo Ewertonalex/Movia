@@ -13,8 +13,14 @@ import {
   Timer,
 } from "lucide-react";
 import { useMemo, useState, useSyncExternalStore } from "react";
-import { Badge, buttonClasses, Eyebrow } from "@/components/ui/primitives";
-import { MUSCLE_GROUPS } from "@/lib/catalog";
+import { QuickStartWizard } from "@/components/quick-start/quick-start-wizard";
+import {
+  Badge,
+  buttonClasses,
+  Eyebrow,
+  OptionButton,
+} from "@/components/ui/primitives";
+import { CORE_CATALOG, MUSCLE_GROUPS } from "@/lib/catalog";
 import {
   GOALS,
   LEVELS,
@@ -40,6 +46,12 @@ import type {
   PlannerSex,
   WeekdayKey,
 } from "@/lib/types";
+import {
+  generateEquipmentAwarePlan,
+  listSwapOptions,
+  progressionHint,
+  swapExerciseInPlan,
+} from "@/lib/workout-generator/generator";
 import { cn, formatRest } from "@/lib/utils";
 
 interface PlannerSurfaceProps {
@@ -47,6 +59,30 @@ interface PlannerSurfaceProps {
   onOpenLibrary: () => void;
 }
 
+type PlannerMode = "personalized" | "quick";
+
+function withoutGear(input: PlannerInput): PlannerInput {
+  return {
+    heightCm: input.heightCm,
+    weightKg: input.weightKg,
+    sex: input.sex,
+    goal: input.goal,
+    level: input.level,
+    minutes: input.minutes,
+    days: input.days,
+    muscles: input.muscles,
+  };
+}
+
+function isQuickPlan(input: PlannerInput): boolean {
+  return input.location !== undefined || input.equipment !== undefined;
+}
+
+/**
+ * Superfície do planejador. A rotina personalizada é o fluxo clássico
+ * (altura, peso, sexo, objetivo, nível, tempo, dias, músculos). Local e
+ * equipamento existem só em "Treine com o que você tem".
+ */
 export function PlannerSurface({
   catalog,
   onOpenLibrary,
@@ -58,6 +94,8 @@ export function PlannerSurface({
   );
   const [draft, setDraft] = useState<PlannerInput | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
+  const [mode, setMode] = useState<PlannerMode>("personalized");
+  const [swapKey, setSwapKey] = useState<string | null>(null);
 
   const input: PlannerInput = draft ?? plan?.input ?? PLANNER_DEFAULTS;
   const setInput = (updater: (current: PlannerInput) => PlannerInput) =>
@@ -82,18 +120,34 @@ export function PlannerSurface({
   };
 
   const generate = (rotation = 0) => {
-    const validation = validatePlannerInput(input);
+    const payload = withoutGear(input);
+    const validation = validatePlannerInput(payload);
     setErrors(validation);
     if (validation.length > 0) return;
-    publishPlan(generateWeeklyPlan(input, catalog, rotation));
+    publishPlan(generateWeeklyPlan(payload, CORE_CATALOG, rotation));
     setDraft(null);
+    setSwapKey(null);
   };
 
   const reorganize = () => {
     if (!plan) return;
-    publishPlan(
-      generateWeeklyPlan(plan.input, catalog, (plan.rotation ?? 0) + 1),
-    );
+    const nextRotation = (plan.rotation ?? 0) + 1;
+    if (isQuickPlan(plan.input)) {
+      publishPlan(
+        generateEquipmentAwarePlan(plan.input, catalog, nextRotation),
+      );
+    } else {
+      publishPlan(
+        generateWeeklyPlan(withoutGear(plan.input), CORE_CATALOG, nextRotation),
+      );
+    }
+    setSwapKey(null);
+  };
+
+  const swap = (day: WeekdayKey, fromId: string, toId: string) => {
+    if (!plan) return;
+    publishPlan(swapExerciseInPlan(plan, day, fromId, toId, catalog));
+    setSwapKey(null);
   };
 
   const totalExercises = useMemo(
@@ -103,6 +157,11 @@ export function PlannerSurface({
   );
 
   const adjustments = plan?.adjustments ?? [];
+  const bodyweightHint =
+    plan && isQuickPlan(plan.input) && plan.input.equipment?.length === 0
+      ? progressionHint(plan.input)
+      : null;
+  const showSwap = Boolean(plan && isQuickPlan(plan.input));
 
   return (
     <div className="mx-auto w-full max-w-[1240px] px-4 pb-16 sm:px-6 lg:px-10">
@@ -143,97 +202,95 @@ export function PlannerSurface({
           Monte sua semana
         </h2>
 
-        <div className="card-base space-y-8 p-5 sm:p-8">
-          <div className="grid gap-5 sm:grid-cols-2">
-            <label className="space-y-2">
-              <span className="eyebrow">Altura (cm)</span>
-              <input
-                type="number"
-                min={120}
-                max={230}
-                value={input.heightCm}
-                onChange={(event) =>
-                  setInput((current) => ({
-                    ...current,
-                    heightCm: Number(event.target.value),
-                  }))
-                }
-                className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-lg font-[800] tracking-tight outline-none transition focus:border-vivid"
-              />
-            </label>
-            <label className="space-y-2">
-              <span className="eyebrow">Peso (kg)</span>
-              <input
-                type="number"
-                min={35}
-                max={250}
-                value={input.weightKg}
-                onChange={(event) =>
-                  setInput((current) => ({
-                    ...current,
-                    weightKg: Number(event.target.value),
-                  }))
-                }
-                className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-lg font-[800] tracking-tight outline-none transition focus:border-vivid"
-              />
-            </label>
-          </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ModeCard
+            title="Rotina personalizada"
+            detail="Altura, peso, dias e músculos. O fluxo de sempre."
+            active={mode === "personalized"}
+            onClick={() => setMode("personalized")}
+          />
+          <ModeCard
+            title="Treine com o que você tem"
+            detail="Onde você está e o que tem à mão. Treino em menos de um minuto."
+            active={mode === "quick"}
+            onClick={() => setMode("quick")}
+          />
+        </div>
 
-          <fieldset className="space-y-3">
-            <legend className="eyebrow">Sexo</legend>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {SEXES.map((sex) => (
-                <OptionButton
-                  key={sex}
-                  label={sex}
-                  active={input.sex === sex}
-                  onClick={() =>
+        {mode === "quick" ? (
+          <QuickStartWizard catalog={catalog} />
+        ) : (
+          <div className="card-base space-y-8 p-5 sm:p-8">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="eyebrow">Altura (cm)</span>
+                <input
+                  type="number"
+                  min={120}
+                  max={230}
+                  value={input.heightCm}
+                  onChange={(event) =>
                     setInput((current) => ({
                       ...current,
-                      sex: sex as PlannerSex,
+                      heightCm: Number(event.target.value),
                     }))
                   }
+                  className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-lg font-[800] tracking-tight outline-none transition focus:border-vivid"
                 />
-              ))}
-            </div>
-            <p className="text-xs leading-relaxed text-muted">
-              Usamos só para calibrar descanso, repetições e volume. Sem essa
-              informação, a rotina segue a referência padrão.
-            </p>
-          </fieldset>
-
-          <fieldset className="space-y-3">
-            <legend className="eyebrow">Objetivo</legend>
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              {GOALS.map((goal) => (
-                <OptionButton
-                  key={goal}
-                  label={goal}
-                  active={input.goal === goal}
-                  onClick={() =>
+              </label>
+              <label className="space-y-2">
+                <span className="eyebrow">Peso (kg)</span>
+                <input
+                  type="number"
+                  min={35}
+                  max={250}
+                  value={input.weightKg}
+                  onChange={(event) =>
                     setInput((current) => ({
                       ...current,
-                      goal: goal as PlannerGoal,
+                      weightKg: Number(event.target.value),
                     }))
                   }
+                  className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-lg font-[800] tracking-tight outline-none transition focus:border-vivid"
                 />
-              ))}
+              </label>
             </div>
-          </fieldset>
 
-          <div className="grid gap-6 lg:grid-cols-2">
             <fieldset className="space-y-3">
-              <legend className="eyebrow">Experiência</legend>
-              <div className="grid grid-cols-3 gap-2">
-                {LEVELS.map((level) => (
+              <legend className="eyebrow">Sexo</legend>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {SEXES.map((sex) => (
                   <OptionButton
-                    key={level}
-                    label={level}
-                    active={input.level === level}
+                    key={sex}
+                    label={sex}
+                    active={input.sex === sex}
                     onClick={() =>
                       setInput((current) => ({
                         ...current,
-                        level: level as PlannerLevel,
+                        sex: sex as PlannerSex,
+                      }))
+                    }
+                  />
+                ))}
+              </div>
+              <p className="text-xs leading-relaxed text-muted">
+                Usamos só para calibrar descanso, repetições e volume. Sem essa
+                informação, a rotina segue a referência padrão.
+              </p>
+            </fieldset>
+
+            <fieldset className="space-y-3">
+              <legend className="eyebrow">Objetivo</legend>
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                {GOALS.map((goal) => (
+                  <OptionButton
+                    key={goal}
+                    label={goal}
+                    active={input.goal === goal}
+                    onClick={() =>
+                      setInput((current) => ({
+                        ...current,
+                        goal: goal as PlannerGoal,
                       }))
                     }
                   />
@@ -241,125 +298,146 @@ export function PlannerSurface({
               </div>
             </fieldset>
 
+            <div className="grid gap-6 lg:grid-cols-2">
+              <fieldset className="space-y-3">
+                <legend className="eyebrow">Experiência</legend>
+                <div className="grid grid-cols-3 gap-2">
+                  {LEVELS.map((level) => (
+                    <OptionButton
+                      key={level}
+                      label={level}
+                      active={input.level === level}
+                      onClick={() =>
+                        setInput((current) => ({
+                          ...current,
+                          level: level as PlannerLevel,
+                        }))
+                      }
+                    />
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset className="space-y-3">
+                <legend className="eyebrow">Tempo por treino</legend>
+                <div className="grid grid-cols-4 gap-2">
+                  {SESSION_MINUTES.map((minutes) => (
+                    <OptionButton
+                      key={minutes}
+                      label={`${minutes} min`}
+                      active={input.minutes === minutes}
+                      onClick={() =>
+                        setInput((current) => ({ ...current, minutes }))
+                      }
+                    />
+                  ))}
+                </div>
+              </fieldset>
+            </div>
+
             <fieldset className="space-y-3">
-              <legend className="eyebrow">Tempo por treino</legend>
-              <div className="grid grid-cols-4 gap-2">
-                {SESSION_MINUTES.map((minutes) => (
-                  <OptionButton
-                    key={minutes}
-                    label={`${minutes} min`}
-                    active={input.minutes === minutes}
-                    onClick={() =>
-                      setInput((current) => ({ ...current, minutes }))
-                    }
-                  />
-                ))}
+              <legend className="eyebrow">Dias de treino</legend>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                {WEEKDAYS.map((day) => {
+                  const active = input.days.includes(day.key);
+                  return (
+                    <button
+                      key={day.key}
+                      type="button"
+                      aria-pressed={active}
+                      aria-label={day.full}
+                      onClick={() => toggleDay(day.key)}
+                      className={cn(
+                        "rounded-2xl border px-2 py-3 text-sm font-bold tracking-tight transition",
+                        active
+                          ? "border-night bg-night text-lime"
+                          : "border-line bg-canvas text-muted hover:border-vivid hover:text-deep",
+                      )}
+                    >
+                      {day.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted">
+                Escolha pelo menos dois dias na semana.
+              </p>
+            </fieldset>
+
+            <fieldset className="space-y-3">
+              <legend className="eyebrow">Foco muscular</legend>
+              <div className="flex flex-wrap gap-2">
+                {MUSCLE_GROUPS.map((muscle) => {
+                  const active = input.muscles.includes(muscle);
+                  return (
+                    <button
+                      key={muscle}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => toggleMuscle(muscle)}
+                      className={cn(
+                        "rounded-full border px-4 py-2 text-sm font-semibold transition",
+                        active
+                          ? "border-deep bg-vivid/15 text-deep"
+                          : "border-line bg-canvas text-muted hover:border-vivid hover:text-deep",
+                      )}
+                    >
+                      {muscle}
+                    </button>
+                  );
+                })}
               </div>
             </fieldset>
-          </div>
 
-          <fieldset className="space-y-3">
-            <legend className="eyebrow">Dias de treino</legend>
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-              {WEEKDAYS.map((day) => {
-                const active = input.days.includes(day.key);
-                return (
-                  <button
-                    key={day.key}
-                    type="button"
-                    aria-pressed={active}
-                    aria-label={day.full}
-                    onClick={() => toggleDay(day.key)}
-                    className={cn(
-                      "rounded-2xl border px-2 py-3 text-sm font-bold tracking-tight transition",
-                      active
-                        ? "border-night bg-night text-lime"
-                        : "border-line bg-canvas text-muted hover:border-vivid hover:text-deep",
-                    )}
+            {errors.length > 0 ? (
+              <ul
+                role="alert"
+                className="space-y-2 rounded-2xl border border-[#F3D2C9] bg-[#FDF1ED] px-4 py-3"
+              >
+                {errors.map((message) => (
+                  <li
+                    key={message}
+                    className="flex items-start gap-2 text-sm text-[#8A3418]"
                   >
-                    {day.label}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-xs text-muted">
-              Escolha pelo menos dois dias na semana.
-            </p>
-          </fieldset>
-
-          <fieldset className="space-y-3">
-            <legend className="eyebrow">Foco muscular</legend>
-            <div className="flex flex-wrap gap-2">
-              {MUSCLE_GROUPS.map((muscle) => {
-                const active = input.muscles.includes(muscle);
-                return (
-                  <button
-                    key={muscle}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => toggleMuscle(muscle)}
-                    className={cn(
-                      "rounded-full border px-4 py-2 text-sm font-semibold transition",
-                      active
-                        ? "border-deep bg-vivid/15 text-deep"
-                        : "border-line bg-canvas text-muted hover:border-vivid hover:text-deep",
-                    )}
-                  >
-                    {muscle}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
-
-          {errors.length > 0 ? (
-            <ul
-              role="alert"
-              className="space-y-2 rounded-2xl border border-[#F3D2C9] bg-[#FDF1ED] px-4 py-3"
-            >
-              {errors.map((message) => (
-                <li
-                  key={message}
-                  className="flex items-start gap-2 text-sm text-[#8A3418]"
-                >
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-                  {message}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => generate(plan?.rotation ?? 0)}
-              className={buttonClasses("primary")}
-            >
-              <Sparkles className="size-4" aria-hidden />
-              {plan ? "Refazer minha rotina" : "Gerar minha rotina inteligente"}
-            </button>
-            {plan ? (
-              <>
-                <button
-                  type="button"
-                  onClick={reorganize}
-                  className={buttonClasses("secondary")}
-                >
-                  <Shuffle className="size-4" aria-hidden />
-                  Reorganizar
-                </button>
-                <button
-                  type="button"
-                  onClick={onOpenLibrary}
-                  className={buttonClasses("ghost", "text-muted")}
-                >
-                  <ScanLine className="size-4" aria-hidden />
-                  Ver vídeos dos exercícios
-                </button>
-              </>
+                    <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                    {message}
+                  </li>
+                ))}
+              </ul>
             ) : null}
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => generate(plan?.rotation ?? 0)}
+                className={buttonClasses("primary")}
+              >
+                <Sparkles className="size-4" aria-hidden />
+                {plan ? "Refazer minha rotina" : "Gerar minha rotina inteligente"}
+              </button>
+              {plan ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={reorganize}
+                    className={buttonClasses("secondary")}
+                  >
+                    <Shuffle className="size-4" aria-hidden />
+                    Reorganizar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onOpenLibrary}
+                    className={buttonClasses("ghost", "text-muted")}
+                  >
+                    <ScanLine className="size-4" aria-hidden />
+                    Ver vídeos dos exercícios
+                  </button>
+                </>
+              ) : null}
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       {plan ? (
@@ -418,6 +496,15 @@ export function PlannerSurface({
             </div>
           ) : null}
 
+          {bodyweightHint ? (
+            <div className="card-base space-y-2 p-5 sm:p-6">
+              <p className="text-sm font-[820] tracking-tight">
+                Progressão sem equipamento
+              </p>
+              <p className="text-sm leading-relaxed text-muted">{bodyweightHint}</p>
+            </div>
+          ) : null}
+
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {plan.days.map((day) => {
               const weekday = WEEKDAYS.find((item) => item.key === day.day);
@@ -454,31 +541,94 @@ export function PlannerSurface({
                         {day.focus?.join(" · ")}
                       </p>
                       <ul className="mt-4 space-y-3">
-                        {day.exercises.map((exercise) => (
-                          <li
-                            key={`${day.day}-${exercise.exerciseId}`}
-                            className="rounded-2xl border border-line bg-canvas/60 p-3"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <p className="text-sm font-[800] tracking-tight">
-                                {exercise.name}
+                        {day.exercises.map((exercise) => {
+                          const key = `${day.day}-${exercise.exerciseId}`;
+                          const open = swapKey === key;
+                          const usedIds = day.exercises
+                            .map((item) => item.exerciseId)
+                            .filter((id) => id !== exercise.exerciseId);
+                          const options =
+                            showSwap && open
+                              ? listSwapOptions(
+                                  exercise,
+                                  plan.input,
+                                  catalog,
+                                  usedIds,
+                                )
+                              : [];
+
+                          return (
+                            <li
+                              key={key}
+                              className="rounded-2xl border border-line bg-canvas/60 p-3"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <p className="text-sm font-[800] tracking-tight">
+                                  {exercise.name}
+                                </p>
+                                {exercise.analyzable ? (
+                                  <ScanLine
+                                    className="mt-0.5 size-3.5 shrink-0 text-deep"
+                                    aria-label="Exercício com análise por vídeo"
+                                  />
+                                ) : null}
+                              </div>
+                              <p className="mt-1 text-xs text-muted">
+                                {exercise.equipment}
                               </p>
-                              {exercise.analyzable ? (
-                                <ScanLine
-                                  className="mt-0.5 size-3.5 shrink-0 text-deep"
-                                  aria-label="Exercício com análise por vídeo"
-                                />
+                              <p className="mt-2 text-xs font-semibold text-ink">
+                                {exercise.sets} × {exercise.reps} reps ·{" "}
+                                {formatRest(exercise.restSeconds)} de descanso
+                              </p>
+                              {showSwap ? (
+                                <>
+                                  <p className="mt-2 text-[11px] font-semibold text-muted">
+                                    {exercise.analyzable
+                                      ? "👁 Análise Movia disponível"
+                                      : "Análise de movimento em breve"}
+                                  </p>
+                                  <button
+                                    type="button"
+                                    aria-expanded={open}
+                                    onClick={() =>
+                                      setSwapKey(open ? null : key)
+                                    }
+                                    className="mt-2 text-xs font-semibold text-deep hover:underline"
+                                  >
+                                    Trocar exercício
+                                  </button>
+                                  {open ? (
+                                    <div className="mt-2 space-y-1">
+                                      {options.length === 0 ? (
+                                        <p className="text-xs text-muted">
+                                          Não há alternativa cadastrada para o
+                                          equipamento e o nível atuais.
+                                        </p>
+                                      ) : (
+                                        options.map((option) => (
+                                          <button
+                                            key={option.id}
+                                            type="button"
+                                            onClick={() =>
+                                              swap(
+                                                day.day,
+                                                exercise.exerciseId,
+                                                option.id,
+                                              )
+                                            }
+                                            className="block w-full rounded-xl border border-line bg-surface px-3 py-2 text-left text-xs font-semibold hover:border-vivid"
+                                          >
+                                            {option.name}
+                                          </button>
+                                        ))
+                                      )}
+                                    </div>
+                                  ) : null}
+                                </>
                               ) : null}
-                            </div>
-                            <p className="mt-1 text-xs text-muted">
-                              {exercise.equipment}
-                            </p>
-                            <p className="mt-2 text-xs font-semibold text-ink">
-                              {exercise.sets} × {exercise.reps} reps ·{" "}
-                              {formatRest(exercise.restSeconds)} de descanso
-                            </p>
-                          </li>
-                        ))}
+                            </li>
+                          );
+                        })}
                       </ul>
                     </>
                   )}
@@ -511,12 +661,14 @@ export function PlannerSurface({
   );
 }
 
-function OptionButton({
-  label,
+function ModeCard({
+  title,
+  detail,
   active,
   onClick,
 }: {
-  label: string;
+  title: string;
+  detail: string;
   active: boolean;
   onClick: () => void;
 }) {
@@ -526,13 +678,14 @@ function OptionButton({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "rounded-2xl border px-3 py-3 text-sm font-semibold transition",
+        "card-base p-5 text-left transition",
         active
-          ? "border-deep bg-vivid/12 text-deep"
-          : "border-line bg-canvas text-muted hover:border-vivid hover:text-ink",
+          ? "border-deep bg-vivid/10"
+          : "hover:border-vivid",
       )}
     >
-      {label}
+      <p className="text-sm font-[820] tracking-tight">{title}</p>
+      <p className="mt-1 text-xs leading-relaxed text-muted">{detail}</p>
     </button>
   );
 }

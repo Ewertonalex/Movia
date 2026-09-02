@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { enterApp } from "./helpers";
 
 /**
  * Grava um WebM real no próprio navegador para exercitar upload, leitura de
@@ -64,6 +65,7 @@ test.describe("pipeline de upload com vídeo real", () => {
     page,
   }) => {
     await page.goto("/");
+    await enterApp(page);
     await page
       .getByRole("navigation", { name: "Navegação principal" })
       .getByRole("button", { name: "Analisar vídeo" })

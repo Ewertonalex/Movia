@@ -5,6 +5,7 @@ import { AboutSurface } from "@/components/about/about-surface";
 import { AnalyzeSurface } from "@/components/analyze/analyze-surface";
 import { MoviaMark } from "@/components/brand/movia-mark";
 import { HistorySurface } from "@/components/history/history-surface";
+import { LandingSurface } from "@/components/landing/landing-surface";
 import { LibrarySurface } from "@/components/library/library-surface";
 import { PlannerSurface } from "@/components/planner/planner-surface";
 import { SiteHeader } from "@/components/site-header";
@@ -33,7 +34,7 @@ export function AppShell(props: AppShellProps) {
 
 function AppSurfaces({ catalog, source }: AppShellProps) {
   const { showToast } = useToast();
-  const [surface, setSurface] = useState<Surface>("routine");
+  const [surface, setSurface] = useState<Surface>("home");
   const [analyzeSession, setAnalyzeSession] = useState<{
     key: number;
     profile: AnalysisProfile;
@@ -50,7 +51,7 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
   }, []);
 
   const handleBrandClick = useCallback(() => {
-    setSurface("routine");
+    setSurface("home");
     setAnalyzeSession((session) => ({
       key: session.key + 1,
       profile: "squat",
@@ -94,16 +95,24 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
+  const isHome = surface === "home";
+
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader
-        active={surface}
-        onNavigate={navigate}
-        onBrandClick={handleBrandClick}
-        onHistoryClick={handleHistoryClick}
-      />
+      {isHome ? null : (
+        <SiteHeader
+          active={surface}
+          onNavigate={navigate}
+          onBrandClick={handleBrandClick}
+          onHistoryClick={handleHistoryClick}
+        />
+      )}
 
       <main className="flex-1">
+        {surface === "home" ? (
+          <LandingSurface onStart={() => navigate("routine")} />
+        ) : null}
+
         {surface === "analyze" ? (
           <AnalyzeSurface
             key={analyzeSession.key}
@@ -136,7 +145,8 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
         ) : null}
       </main>
 
-      <footer className="border-t border-line bg-surface">
+      {isHome ? null : (
+        <footer className="border-t border-line bg-surface">
         <div className="mx-auto grid w-full max-w-[1240px] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.2fr_1fr_1fr] lg:px-10">
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
@@ -193,7 +203,8 @@ function AppSurfaces({ catalog, source }: AppShellProps) {
             orientação de um profissional qualificado.
           </p>
         </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }

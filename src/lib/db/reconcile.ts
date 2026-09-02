@@ -27,6 +27,9 @@ export function reconcileWithCatalog(stored: Exercise[]): Exercise[] {
       videoSource: canonical.videoSource,
       videoUrl: canonical.videoUrl,
       sortOrder: canonical.sortOrder,
+      equipmentRequired: canonical.equipmentRequired,
+      locationCompatible: canonical.locationCompatible,
+      equipmentAlternatives: canonical.equipmentAlternatives,
     };
   });
 

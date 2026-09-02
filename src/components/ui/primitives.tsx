@@ -76,6 +76,32 @@ export function Card({
   );
 }
 
+export function OptionButton({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "rounded-2xl border px-3 py-3 text-sm font-semibold transition",
+        active
+          ? "border-deep bg-vivid/12 text-deep"
+          : "border-line bg-canvas text-muted hover:border-vivid hover:text-ink",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 export function StepLabel({ step, title }: { step: string; title: string }) {
   return (
     <div className="flex flex-wrap items-baseline gap-3">

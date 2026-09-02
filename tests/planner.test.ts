@@ -35,6 +35,8 @@ describe("validação do planejador", () => {
 
 describe("quantidade de exercícios por duração", () => {
   it("segue as faixas de tempo", () => {
+    expect(exercisesPerSession(15)).toBe(2);
+    expect(exercisesPerSession(20)).toBe(2);
     expect(exercisesPerSession(30)).toBe(3);
     expect(exercisesPerSession(35)).toBe(3);
     expect(exercisesPerSession(45)).toBe(4);
@@ -284,5 +286,40 @@ describe("planos salvos antes da calibração", () => {
     expect(migrated.input.sex).toBe("Prefiro não informar");
     expect(migrated.adjustments).toHaveLength(1);
     expect(migrated.days).toEqual(legacy.days);
+  });
+
+  it("renomeia o grupo Core para Abdômen em planos antigos", () => {
+    const legacy = generateWeeklyPlan(base);
+    const stored = JSON.parse(
+      JSON.stringify({
+        ...legacy,
+        input: {
+          ...legacy.input,
+          muscles: legacy.input.muscles.map((muscle) =>
+            muscle === "Abdômen" ? "Core" : muscle,
+          ),
+        },
+        days: legacy.days.map((day) => ({
+          ...day,
+          focus: day.focus?.map((muscle) =>
+            muscle === "Abdômen" ? "Core" : muscle,
+          ),
+          exercises: day.exercises.map((exercise) => ({
+            ...exercise,
+            muscleGroup:
+              exercise.muscleGroup === "Abdômen" ? "Core" : exercise.muscleGroup,
+          })),
+        })),
+      }),
+    ) as WeeklyPlan;
+
+    const migrated = migrateStoredPlan(stored);
+    expect(migrated.input.muscles).not.toContain("Core");
+    expect(migrated.input.muscles).toEqual(legacy.input.muscles);
+    expect(
+      migrated.days.flatMap((day) =>
+        day.exercises.map((exercise) => exercise.muscleGroup),
+      ),
+    ).not.toContain("Core");
   });
 });
